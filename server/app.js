@@ -15,14 +15,14 @@ app.use(express.json());
 
 app.get("/", (req, res) => {
   res.status(200).json({
-    message: "Welcome to MMUST-DCBT API 🚀",
+    message: "Welcome to MMUST-DCBT API ",
     status: "running",
     version: "1.0.0",
   });
 });
 
 // routes
-app.use("/api/auth", authRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 // DB connect
 connectDB();
