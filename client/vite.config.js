@@ -11,11 +11,11 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
 
-      includeAssets: [
-        "favicon.ico",
-        "apple-touch-icon.png",
-        "masked-icon.svg",
-      ],
+      injectRegister: "auto",
+
+      devOptions: {
+        enabled: true,
+      },
 
       manifest: {
         name: "MMUST Mental Wellness",
@@ -26,9 +26,8 @@ export default defineConfig({
         background_color: "#ffffff",
 
         display: "standalone",
-        orientation: "portrait",
-        scope: "/",
         start_url: "/",
+        scope: "/",
 
         icons: [
           {
@@ -41,13 +40,11 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
           },
-          {
-            src: "/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any maskable",
-          },
         ],
+      },
+
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
       },
     }),
   ],

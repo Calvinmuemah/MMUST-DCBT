@@ -15,7 +15,6 @@ import "./index.css";
 
 import { registerSW } from "virtual:pwa-register";
 
-// REGISTER SERVICE WORKER
 registerSW({ immediate: true });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
