@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { postRequest } from "../utils/api";
 
-import DashboardNavbar from "../components/DashboardNavbar";
+// import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 
 export default function CBTExercise() {
@@ -81,7 +81,7 @@ export default function CBTExercise() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-purple-50">
 
       {/* 🌿 DASHBOARD NAVBAR */}
-      <DashboardNavbar />
+      {/* <DashboardNavbar /> */}
 
       {/* PAGE CONTENT */}
       <div className="flex-1 px-6 py-10">

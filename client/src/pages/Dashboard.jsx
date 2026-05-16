@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { postRequest } from "../utils/api";
 
-import DashboardNavbar from "../components/DashboardNavbar";
+// import DashboardNavbar from "../components/DashboardNavbar";
 import Footer from "../components/Footer";
 
 export default function Dashboard() {
@@ -13,18 +13,25 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   // =========================
-  // 📡 LOAD USER PROFILE (backend-ready)
+  // 📡 LOAD USER PROFILE
   // =========================
   useEffect(() => {
-    const data = localStorage.getItem("onboarding");
-    if (data) {
-      setProfile(JSON.parse(data));
+    // ✅ GET USER FROM LOCAL STORAGE
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+
+      setProfile(parsedUser);
+
+      // optional → set current mood from onboarding
+      if (parsedUser.mood) {
+        setMood(parsedUser.mood);
+      }
     }
 
-    // FUTURE BACKEND:
-    // fetchProfile()
-    // fetchCBTProgress()
-    // fetchMoodHistory()
+    // FUTURE:
+    // fetch profile from backend
   }, []);
 
   // =========================
@@ -35,7 +42,6 @@ export default function Dashboard() {
       setMood(selectedMood);
       setLoadingMood(true);
 
-      // 👉 BACKEND READY
       await postRequest("/mood/track", {
         mood: selectedMood,
         timestamp: new Date().toISOString(),
@@ -44,14 +50,12 @@ export default function Dashboard() {
       setLoadingMood(false);
     } catch (err) {
       setLoadingMood(false);
+      console.log(err);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50">
-
-      {/* 🌿 NAVBAR */}
-      <DashboardNavbar />
 
       {/* PAGE CONTENT */}
       <div className="flex-1 px-6 py-8">
@@ -67,8 +71,9 @@ export default function Dashboard() {
 
             <div>
               <h1 className="text-2xl font-black text-slate-900">
-                Good day, {profile?.name || "Student"}
+                Good day, {profile?.name || "Student"} 👋
               </h1>
+
               <p className="text-slate-500 mt-1">
                 Your mental wellness control center
               </p>
@@ -89,6 +94,7 @@ export default function Dashboard() {
 
             <div className="bg-white/80 backdrop-blur-xl p-5 rounded-2xl shadow border">
               <p className="text-sm text-slate-500">Stress Level</p>
+
               <h2 className="text-xl font-bold text-blue-600 mt-1">
                 {profile?.stress || "Not set"}
               </h2>
@@ -96,6 +102,7 @@ export default function Dashboard() {
 
             <div className="bg-white/80 backdrop-blur-xl p-5 rounded-2xl shadow border">
               <p className="text-sm text-slate-500">Main Challenge</p>
+
               <h2 className="text-xl font-bold text-teal-600 mt-1">
                 {profile?.challenge || "Not set"}
               </h2>
@@ -103,7 +110,8 @@ export default function Dashboard() {
 
             <div className="bg-white/80 backdrop-blur-xl p-5 rounded-2xl shadow border">
               <p className="text-sm text-slate-500">Mood Status</p>
-              <h2 className="text-xl font-bold text-purple-600 mt-1">
+
+              <h2 className="text-xl font-bold text-purple-600 mt-1 capitalize">
                 {mood || "Not tracked"}
               </h2>
             </div>
@@ -164,6 +172,7 @@ export default function Dashboard() {
                 <h3 className="font-bold text-blue-600">
                   Breathing Exercise
                 </h3>
+
                 <p className="text-slate-500 text-sm mt-2">
                   Reduce anxiety using guided breathing.
                 </p>
@@ -176,6 +185,7 @@ export default function Dashboard() {
                 <h3 className="font-bold text-teal-600">
                   Thought Reframing
                 </h3>
+
                 <p className="text-slate-500 text-sm mt-2">
                   Challenge negative thinking patterns.
                 </p>
@@ -185,6 +195,7 @@ export default function Dashboard() {
                 <h3 className="font-bold text-purple-600">
                   Journaling
                 </h3>
+
                 <p className="text-slate-500 text-sm mt-2">
                   Express emotions and reflect daily.
                 </p>
@@ -194,6 +205,7 @@ export default function Dashboard() {
                 <h3 className="font-bold text-blue-500">
                   Behavioral Activation
                 </h3>
+
                 <p className="text-slate-500 text-sm mt-2">
                   Improve mood through positive actions.
                 </p>
@@ -210,7 +222,10 @@ export default function Dashboard() {
             {/* AI SUPPORT */}
             <div className="bg-gradient-to-r from-blue-600 to-teal-500 text-white p-6 rounded-[28px] shadow-xl">
 
-              <h2 className="text-xl font-bold">AI Support</h2>
+              <h2 className="text-xl font-bold">
+                AI Support
+              </h2>
+
               <p className="text-sm mt-2 opacity-90">
                 Talk to your CBT assistant anytime.
               </p>
