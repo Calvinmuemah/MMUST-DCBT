@@ -46,7 +46,7 @@ export const login = async (req, res) => {
 // =======================
 export const getProfile = async (req, res) => {
   try {
-    const user = await getUserProfile(req.user.id);
+    const user = await getUserProfile(req.user.dbId);
     res.json(user);
   } catch (err) {
     res.status(500).json({
@@ -60,7 +60,7 @@ export const getProfile = async (req, res) => {
 // =======================
 export const onboarding = async (req, res) => {
   try {
-    const result = await completeOnboarding(req.user.id, req.body);
+    const result = await completeOnboarding(req.user.dbId, req.body);
 
     res.json({
       message: "Onboarding saved successfully",

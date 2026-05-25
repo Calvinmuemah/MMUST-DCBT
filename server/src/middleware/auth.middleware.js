@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import { pool } from "../config/db.js";
 
-export const protect = (req, res, next) => {
+export const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -30,9 +31,23 @@ export const protect = (req, res, next) => {
     // 4. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    let dbId = decoded.id;
+
+    if (decoded.uid) {
+      const userRes = await pool.query(
+        `SELECT id FROM users WHERE public_id = $1 LIMIT 1`,
+        [decoded.uid]
+      );
+
+      if (userRes.rowCount > 0) {
+        dbId = userRes.rows[0].id;
+      }
+    }
+
     // 5. Attach user safely
     req.user = {
-      id: decoded.id,
+      id: decoded.uid || decoded.id,
+      dbId,
       email: decoded.email,
       role: decoded.role || "user",
     };

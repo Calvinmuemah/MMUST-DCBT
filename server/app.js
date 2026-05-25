@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import morgan from "morgan";
 import { connectDB } from "./src/config/db.js";
 
 import authRoutes from "./src/routes/auth.routes.js";
@@ -11,6 +12,12 @@ dotenv.config();
 const app = express();
 
 // middleware
+// setup request logging (skip in tests)
+if (process.env.NODE_ENV !== "test") {
+  const morganFormat = process.env.NODE_ENV === "production" ? "combined" : "dev";
+  app.use(morgan(morganFormat));
+}
+
 app.use(cors());
 app.use(express.json());
 

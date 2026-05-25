@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { pool } from "../config/db.js";
 import { generateToken } from "../utils/jwt.js";
+import { ensureUserPublicId } from "../utils/ids.js";
 
 // =======================
 // REGISTER (AUTH ONLY)
@@ -25,11 +26,17 @@ export const registerUser = async (data) => {
      RETURNING id, name, email`,
     [name, email, hashedPassword]
   );
+  const created = newUser.rows[0];
+  const publicId = await ensureUserPublicId(created.id, created.email);
 
-  const token = generateToken(newUser.rows[0]);
+  const token = generateToken({ id: created.id, uid: publicId, email: created.email });
 
   return {
-    user: newUser.rows[0],
+    user: {
+      id: publicId || created.id,
+      name: created.name,
+      email: created.email,
+    },
     token,
   };
 };
@@ -57,11 +64,12 @@ export const loginUser = async (data) => {
     throw new Error("Invalid credentials");
   }
 
-  const token = generateToken(user);
+  const publicId = user.public_id || (await ensureUserPublicId(user.id, user.email));
+  const token = generateToken({ id: user.id, uid: publicId, email: user.email });
 
   return {
     user: {
-      id: user.id,
+      id: publicId || user.id,
       name: user.name,
       email: user.email,
       stress: user.stress,
@@ -77,11 +85,22 @@ export const loginUser = async (data) => {
 // =======================
 export const getUserProfile = async (userId) => {
   const user = await pool.query(
-    "SELECT id, name, email, stress, challenge, mood FROM users WHERE id = $1",
+    "SELECT id, public_id, name, email, stress, challenge, mood FROM users WHERE id = $1",
     [userId]
   );
 
-  return user.rows[0];
+  const profile = user.rows[0];
+
+  return profile
+    ? {
+      id: profile.public_id || profile.id,
+        name: profile.name,
+        email: profile.email,
+        stress: profile.stress,
+        challenge: profile.challenge,
+        mood: profile.mood,
+      }
+    : null;
 };
 
 // =======================
@@ -96,11 +115,22 @@ export const completeOnboarding = async (userId, data) => {
          challenge = $2,
          mood = $3
      WHERE id = $4
-     RETURNING id, name, email, stress, challenge, mood`,
+     RETURNING id, public_id, name, email, stress, challenge, mood`,
     [stress, challenge, mood, userId]
   );
 
-  return updated.rows[0];
+  const profile = updated.rows[0];
+
+  return profile
+    ? {
+      id: profile.public_id || profile.id,
+        name: profile.name,
+        email: profile.email,
+        stress: profile.stress,
+        challenge: profile.challenge,
+        mood: profile.mood,
+      }
+    : null;
 };
 
 // =======================
