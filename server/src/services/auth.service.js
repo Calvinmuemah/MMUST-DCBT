@@ -85,7 +85,7 @@ export const getUserProfile = async (userId) => {
 };
 
 // =======================
-// ONBOARDING (NEW)
+// ONBOARDING (UPDATE USER CBT PROFILE)
 // =======================
 export const completeOnboarding = async (userId, data) => {
   const { stress, challenge, mood } = data;
@@ -101,4 +101,20 @@ export const completeOnboarding = async (userId, data) => {
   );
 
   return updated.rows[0];
+};
+
+// =======================
+// CBT CONTEXT HELPERS (NEW - IMPORTANT FOR YOUR CHAT SYSTEM)
+// =======================
+
+// Get user mental profile (for AI personalization later)
+export const getUserCBTContext = async (userId) => {
+  const result = await pool.query(
+    `SELECT stress, challenge, mood
+     FROM users
+     WHERE id = $1`,
+    [userId]
+  );
+
+  return result.rows[0];
 };
