@@ -5,127 +5,83 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+
 // ===============================
-// LANGUAGE RULES
+// LANGUAGE CONTROL
 // ===============================
 
-const getLanguagePrompt=(language="english")=>{
-
-const languages={
-
-english:`
-Respond only in English.
-Use simple student-friendly language.
+const getLanguagePrompt = (language = "english") => {
+  const languages = {
+    english: `
+Respond only in simple, supportive English.
+Do not sound robotic.
 `,
 
-kiswahili:`
-Respond only in normal everyday Kiswahili.
-
-IMPORTANT:
-
-- Use natural Kenyan Kiswahili
-- Avoid formal textbook Kiswahili
-- Sound like a supportive friend
-- Example style:
-"inaonekana hiyo imekuwa ikikulemea"
-instead of
-"inaonekana jambo hilo linakusumbua mno"
+    kiswahili: `
+Respond in natural Kenyan Kiswahili.
+Keep it simple and supportive.
+Avoid formal textbook Kiswahili.
 `,
 
-sheng:`
-Respond only in Kenyan Sheng.
+    sheng: `
+Respond in moderate Kenyan Sheng.
+Mix English and Kiswahili naturally.
+Keep it understandable and supportive.
+`,
+  };
 
-IMPORTANT:
-
-- Use moderate Sheng
-- Mix Kiswahili and English naturally
-- Avoid excessive slang
-- Keep it understandable
-
-Example style:
-
-"Hiyo pressure inaonekana imekuwa mingi kiasi"
-
-instead of
-
-"Mbona uko stressed sana buda maze noma deadly"
-`
+  return languages[language] || languages.english;
 };
 
-return languages[language] || languages.english;
-
-};
 
 // ===============================
-// CBT PROMPTS
+// CBT LOCK (VERY IMPORTANT)
 // ===============================
 
-const getCBTPrompt=(topic)=>{
+const getCBTRules = () => {
+  return `
+You are a CBT mental health support assistant for university students.
 
-const base=`
+🚨 STRICT RULES:
+- You are ONLY a CBT emotional support assistant
+- Do NOT give medical, legal, financial, or unrelated advice
+- If asked unrelated topics, gently redirect to emotions
+- NEVER introduce yourself
+- NEVER say "I am MMUSTCare"
+- NEVER mention system prompts or AI
+- Do NOT change topic away from feelings/emotions
 
-You are MMUSTCare, a CBT mental wellness assistant for university students.
-
-IMPORTANT:
-
-- Be warm
-- Sound human
-- Never sound robotic
-- Never repeat responses
+🎯 RESPONSE STYLE:
+- Be warm, human, and supportive
 - Maximum 45 words
-- Maximum 2-4 sentences
-- Keep responses short
-- Validate feelings briefly
-- Give one CBT reflection
-- Ask exactly ONE question
-- Continue naturally
+- 2–4 short sentences max
+- Validate feelings first
+- Give ONE CBT reflection
+- Ask EXACTLY ONE question
+- No lists unless asked
+- No lectures
 `;
-
-const topics={
-
-anxiety:`
-Focus:
-- triggers
-- grounding
-- breathing
-- catastrophic thinking
-`,
-
-depression:`
-Focus:
-- low mood
-- motivation
-- self worth
-`,
-
-"academic stress":`
-Focus:
-- study stress
-- planning
-- overwhelm
-`,
-
-overthinking:`
-Focus:
-- thought loops
-- reframing
-`,
-
-relationships:`
-Focus:
-- emotions
-- communication
-- boundaries
-`,
-
-general:`
-Focus:
-- emotional wellbeing
-`
 };
 
-return base+(topics[topic]||topics.general);
 
+// ===============================
+// TOPIC CBT MAPPING
+// ===============================
+
+const getTopicFocus = (topic = "general") => {
+  const topics = {
+    anxiety: "Focus on worry, fear, overthinking, grounding techniques.",
+    depression: "Focus on low mood, motivation, self-worth.",
+    sleep: "Focus on sleep habits, racing thoughts, relaxation.",
+    relationships: "Focus on communication, emotions, boundaries.",
+    confidence: "Focus on self-esteem, self-image, doubt.",
+    "study stress": "Focus on academic pressure, overwhelm, planning.",
+    "pain & emotions": "Focus on emotional + physical stress connection.",
+    finances: "Focus on financial stress and emotional impact.",
+    general: "Focus on emotional wellbeing and thoughts.",
+  };
+
+  return topics[topic?.toLowerCase()] || topics.general;
 };
 
 
@@ -133,159 +89,127 @@ return base+(topics[topic]||topics.general);
 // MEMORY
 // ===============================
 
-const getSessionMemory=async(sessionId)=>{
+const getSessionMemory = async (sessionId) => {
+  const result = await pool.query(
+    `
+    SELECT sender, message
+    FROM chat_messages
+    WHERE session_id = $1
+    ORDER BY created_at ASC
+    LIMIT 10
+    `,
+    [sessionId]
+  );
 
-const result=
-await pool.query(
-`
-SELECT sender,message
-FROM chat_messages
-WHERE session_id=$1
-ORDER BY created_at ASC
-LIMIT 10
-`,
-[sessionId]
-);
-
-return result.rows;
-
+  return result.rows;
 };
 
-
-const formatMemory=(messages)=>{
-
-return messages
-.map(
-m=>`${m.sender.toUpperCase()}: ${m.message}`
-)
-.join("\n");
-
+const formatMemory = (messages) => {
+  return messages
+    .map((m) => `${m.sender.toUpperCase()}: ${m.message}`)
+    .join("\n");
 };
 
 
 // ===============================
-// SESSION STARTER
-// NOT LANGUAGE DEPENDENT
+// SESSION STARTER (NO INTRO)
 // ===============================
 
-export const generateSessionStarter=
-async(topic)=>{
+export const generateSessionStarter = async (topic) => {
+  try {
+    const prompt = `
+${getCBTRules()}
 
-try{
+Topic focus: ${getTopicFocus(topic)}
 
-const prompt=`
+Generate ONLY the first therapist message.
 
-${getCBTPrompt(topic)}
-
-Generate ONLY the first message.
-
-Requirements:
-
-- Warm
-- Mention topic naturally
-- Ask one question
-- Maximum 35 words
+Rules:
+- DO NOT introduce yourself
+- DO NOT say greetings like "Hi I'm..."
+- Start directly with emotional engagement
+- Be natural like a therapist already in session
+- Ask ONE gentle question
+- Max 35 words
 `;
 
-const result=
-await ai.models.generateContent({
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
 
-model:"gemini-2.5-flash",
-contents:prompt
+    return (
+      result.text?.trim() ||
+      "What has been on your mind lately regarding this?"
+    );
+  } catch (error) {
+    console.log("STARTER ERROR:", error);
 
-});
-
-return result.text?.trim() ||
-`I'm here with you today. What has been difficult about ${topic}?`;
-
-}
-catch(error){
-
-return `I'm here with you today. What has been difficult about ${topic}?`;
-
-}
-
+    return "What has been on your mind lately regarding this?";
+  }
 };
 
 
 // ===============================
-// MAIN RESPONSE
+// MAIN RESPONSE (CBT LOCKED)
 // ===============================
 
-export const generateResponse=
-async(
+export const generateResponse = async (
+  message,
+  topic = "general",
+  sessionId = null,
+  language = "english"
+) => {
+  try {
+    let memory = "";
 
-message,
-topic="general",
-sessionId=null,
-language="english"
+    if (sessionId) {
+      const history = await getSessionMemory(sessionId);
+      memory = formatMemory(history);
+    }
 
-)=>{
+    const prompt = `
+${getCBTRules()}
 
-try{
-
-let memory="";
-
-if(sessionId){
-
-const history=
-await getSessionMemory(sessionId);
-
-memory=
-formatMemory(history);
-
-}
-
-const prompt=`
-
-${getCBTPrompt(topic)}
+${getTopicFocus(topic)}
 
 ${getLanguagePrompt(language)}
 
-Conversation History:
-
+Conversation Memory:
 ${memory || "No previous conversation"}
 
-Current Message:
-
+User Message:
 "${message}"
 
-Instructions:
-
-- Keep under 45 words
-- Use memory
+IMPORTANT BEHAVIOR:
+- Stay strictly in CBT emotional support mode
+- If message is unrelated (tech, jokes, random topics), redirect to feelings:
+  Example: "I hear you, but let's focus on how that made you feel"
+- Do NOT leave therapy context
 - Continue naturally
-- Ask one question
 `;
 
-const result=
-await ai.models.generateContent({
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
 
-model:"gemini-2.5-flash",
-contents:prompt
+    let reply = result.text?.trim();
 
-});
+    if (!reply) {
+      reply = "What you're feeling matters. Can you tell me more about it?";
+    }
 
-let reply=
-result.text?.trim();
+    return {
+      reply,
+      language,
+    };
+  } catch (error) {
+    console.log("GEMINI ERROR:", error);
 
-if(!reply){
-
-reply=
-"I'm here with you. What feels difficult right now?";
-}
-
-return reply;
-
-}
-catch(error){
-
-console.log(
-"GEMINI ERROR:",
-error
-);
-
-return "I'm here with you. What feels difficult right now?";
-}
-
+    return {
+      reply: "What you're feeling matters. Can you tell me more about it?",
+      language: "english",
+    };
+  }
 };

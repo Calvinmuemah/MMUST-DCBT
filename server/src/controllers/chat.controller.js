@@ -13,104 +13,67 @@ import {
 } from "../utils/ids.js";
 
 
-
 // ======================================
 // START SESSION
 // ======================================
 
 export const startSession = async (req, res) => {
-
   try {
-
     const userId = req.user.dbId;
-
     const { topic } = req.body;
 
     if (!topic) {
-
       return res.status(400).json({
         message: "Topic required"
       });
-
     }
 
     // Create session
     const session = await pool.query(
       `
-      INSERT INTO chat_sessions
-      (user_id, topic)
-      VALUES($1,$2)
-      RETURNING id,topic
+      INSERT INTO chat_sessions (user_id, topic)
+      VALUES ($1, $2)
+      RETURNING id, topic
       `,
       [userId, topic]
     );
 
-    const created =
-      session.rows[0];
+    const created = session.rows[0];
 
-    const publicId =
-      await ensureSessionPublicId(
-        created.id,
-        userId,
-        created.topic
-      );
-
-
-    // Generate dynamic starter
-    const starter =
-      await generateSessionStarter(
-        topic
-      );
-
-
-    // Save starter message
-    await pool.query(
-      `
-      INSERT INTO chat_messages
-      (session_id,sender,message)
-      VALUES($1,'ai',$2)
-      `,
-      [
-        created.id,
-        starter
-      ]
+    // create public id (for frontend safety)
+    const publicId = await ensureSessionPublicId(
+      created.id,
+      userId,
+      created.topic
     );
 
+    // generate CBT starter (NO INTRO)
+    const starter = await generateSessionStarter(topic);
+
+    // save starter message
+    await pool.query(
+      `
+      INSERT INTO chat_messages (session_id, sender, message)
+      VALUES ($1, 'ai', $2)
+      `,
+      [created.id, starter]
+    );
 
     return res.json({
-
-      sessionId:
-        publicId || created.id,
-
-      message:
-        starter,
-
-      topic:
-        topic,
-
-      language:
-        "english"
-
+      sessionId: publicId || created.id,
+      message: starter,
+      topic,
+      language: "english"
     });
 
   } catch (error) {
-
-    console.log(
-      "START SESSION ERROR:",
-      error
-    );
+    console.log("START SESSION ERROR:", error);
 
     return res.status(500).json({
-
-      message:
-        "Server error"
-
+      message: "Server error"
     });
-
   }
-
 };
-
 
 
 // ======================================
@@ -118,100 +81,53 @@ export const startSession = async (req, res) => {
 // ======================================
 
 export const chat = async (req, res) => {
-
   try {
+    const { message, sessionId } = req.body;
+    const userId = req.user.dbId;
 
-    const {
-      message,
-      sessionId
-    } = req.body;
-
-    const userId =
-      req.user.dbId;
-
-
-    if (
-      !message ||
-      !sessionId
-    ) {
-
+    if (!message || !sessionId) {
       return res.status(400).json({
-
-        message:
-          "Message and sessionId required"
-
+        message: "Message and sessionId required"
       });
-
     }
 
-
     // ======================================
-    // CRISIS DETECTION
+    // CRISIS DETECTION (CBT SAFE MODE)
     // ======================================
 
-    if (
-      detectCrisis(message)
-    ) {
-
+    if (detectCrisis(message)) {
       return res.json({
-
         emergency: true,
-
         response:
-          "I'm concerned about what you shared. Please reach out to someone you trust or a counselor.",
-
-        language:
-          "english",
-
+          "I hear that things feel really heavy right now. You don’t have to go through this alone. Can you tell me what’s making it feel this way?",
+        language: "english",
         sessionId
-
       });
-
     }
 
-
     // ======================================
-    // VALIDATE SESSION
+    // RESOLVE SESSION
     // ======================================
 
-    const resolvedId =
-      await resolveSessionId(
-        sessionId
-      );
+    const resolvedId = await resolveSessionId(sessionId);
 
-    const session =
-      await pool.query(
-        `
-        SELECT *
-        FROM chat_sessions
-        WHERE id=$1
-        AND user_id=$2
-        `,
-        [
-          resolvedId,
-          userId
-        ]
-      );
+    const session = await pool.query(
+      `
+      SELECT *
+      FROM chat_sessions
+      WHERE id = $1
+      AND user_id = $2
+      `,
+      [resolvedId, userId]
+    );
 
-
-    if (
-      session.rowCount === 0
-    ) {
-
+    if (session.rowCount === 0) {
       return res.status(403).json({
-
-        message:
-          "Unauthorized session"
-
+        message: "Unauthorized session"
       });
-
     }
 
-
-    const topic =
-      session.rows[0]
-      .topic;
-
+    const topic = session.rows[0].topic;
 
     // ======================================
     // SAVE USER MESSAGE
@@ -219,35 +135,24 @@ export const chat = async (req, res) => {
 
     await pool.query(
       `
-      INSERT INTO chat_messages
-      (session_id,sender,message)
-      VALUES($1,'user',$2)
+      INSERT INTO chat_messages (session_id, sender, message)
+      VALUES ($1, 'user', $2)
       `,
-      [
-        resolvedId,
-        message
-      ]
+      [resolvedId, message]
     );
 
-
     // ======================================
-    // AI RESPONSE
+    // AI RESPONSE (CBT LOCKED)
     // ======================================
 
-    const aiResult =
-      await generateResponse(
-        message,
-        topic,
-        resolvedId
-      );
+    const aiResult = await generateResponse(
+      message,
+      topic,
+      resolvedId
+    );
 
-
-    const reply =
-      aiResult.reply;
-
-    const language =
-      aiResult.language;
-
+    const reply = aiResult.reply;
+    const language = aiResult.language;
 
     // ======================================
     // SAVE AI RESPONSE
@@ -255,149 +160,79 @@ export const chat = async (req, res) => {
 
     await pool.query(
       `
-      INSERT INTO chat_messages
-      (session_id,sender,message)
-      VALUES($1,'ai',$2)
+      INSERT INTO chat_messages (session_id, sender, message)
+      VALUES ($1, 'ai', $2)
       `,
-      [
-        resolvedId,
-        reply
-      ]
+      [resolvedId, reply]
     );
 
-
     // ======================================
-    // SEND RESPONSE
+    // RESPONSE
     // ======================================
 
     return res.json({
-
-      emergency:false,
-
-      response:
-        reply,
-
-      language:
-        language,
-
-      sessionId:
-        sessionId
-
+      emergency: false,
+      response: reply,
+      language,
+      sessionId: resolvedId   // ✅ FIXED (was wrong before)
     });
 
-  }
-  catch(error){
-
-    console.log(
-      "CHAT ERROR:",
-      error
-    );
+  } catch (error) {
+    console.log("CHAT ERROR:", error);
 
     return res.status(500).json({
-
-      message:
-        "Server error"
-
+      message: "Server error"
     });
-
   }
-
 };
-
 
 
 // ======================================
 // GET SESSION HISTORY
 // ======================================
 
-export const getSessionMessages =
-async(req,res)=>{
+export const getSessionMessages = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.dbId;
 
-try{
+    const resolvedId = await resolveSessionId(sessionId);
 
-const {
-sessionId
-}=req.params;
+    // ownership check
+    const check = await pool.query(
+      `
+      SELECT id
+      FROM chat_sessions
+      WHERE id = $1
+      AND user_id = $2
+      `,
+      [resolvedId, userId]
+    );
 
-const userId =
-req.user.dbId;
+    if (check.rowCount === 0) {
+      return res.status(403).json({
+        message: "Unauthorized"
+      });
+    }
 
+    // fetch messages
+    const result = await pool.query(
+      `
+      SELECT sender, message, created_at
+      FROM chat_messages
+      WHERE session_id = $1
+      ORDER BY created_at ASC
+      `,
+      [resolvedId]
+    );
 
-const resolvedId =
-await resolveSessionId(
-sessionId
-);
+    return res.json(result.rows);
 
+  } catch (error) {
+    console.log("GET HISTORY ERROR:", error);
 
-// ownership check
-
-const check =
-await pool.query(
-`
-SELECT id
-FROM chat_sessions
-WHERE id=$1
-AND user_id=$2
-`,
-[
-resolvedId,
-userId
-]
-);
-
-
-if(
-check.rowCount===0
-){
-
-return res.status(403).json({
-
-message:
-"Unauthorized"
-
-});
-
-}
-
-
-// Get messages
-
-const result =
-await pool.query(
-`
-SELECT
-sender,
-message,
-created_at
-FROM chat_messages
-WHERE session_id=$1
-ORDER BY created_at ASC
-`,
-[
-resolvedId
-]
-);
-
-
-return res.json(
-result.rows
-);
-
-}
-catch(error){
-
-console.log(
-"GET HISTORY ERROR:",
-error
-);
-
-return res.status(500).json({
-
-message:
-"Error fetching history"
-
-});
-
-}
-
+    return res.status(500).json({
+      message: "Error fetching history"
+    });
+  }
 };
