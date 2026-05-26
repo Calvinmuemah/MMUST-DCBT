@@ -6,255 +6,286 @@ const ai = new GoogleGenAI({
 });
 
 // ===============================
+// LANGUAGE RULES
+// ===============================
+
+const getLanguagePrompt=(language="english")=>{
+
+const languages={
+
+english:`
+Respond only in English.
+Use simple student-friendly language.
+`,
+
+kiswahili:`
+Respond only in normal everyday Kiswahili.
+
+IMPORTANT:
+
+- Use natural Kenyan Kiswahili
+- Avoid formal textbook Kiswahili
+- Sound like a supportive friend
+- Example style:
+"inaonekana hiyo imekuwa ikikulemea"
+instead of
+"inaonekana jambo hilo linakusumbua mno"
+`,
+
+sheng:`
+Respond only in Kenyan Sheng.
+
+IMPORTANT:
+
+- Use moderate Sheng
+- Mix Kiswahili and English naturally
+- Avoid excessive slang
+- Keep it understandable
+
+Example style:
+
+"Hiyo pressure inaonekana imekuwa mingi kiasi"
+
+instead of
+
+"Mbona uko stressed sana buda maze noma deadly"
+`
+};
+
+return languages[language] || languages.english;
+
+};
+
+// ===============================
 // CBT PROMPTS
 // ===============================
-const getCBTPrompt = (topic) => {
-  const base = `
-You are MMUSTCare, a CBT-based conversational mental wellness assistant for university students.
 
-IMPORTANT RULES:
+const getCBTPrompt=(topic)=>{
 
-- Be warm and supportive
-- Sound natural and human
+const base=`
+
+You are MMUSTCare, a CBT mental wellness assistant for university students.
+
+IMPORTANT:
+
+- Be warm
+- Sound human
 - Never sound robotic
 - Never repeat responses
-- Use previous conversation context
-- Keep responses VERY SHORT
-- Maximum 2–4 sentences
 - Maximum 45 words
-- Use simple language
-- Avoid long explanations
-- Don't diagnose users
-- Validate emotions briefly
-- Give one CBT-based reflection or suggestion
-- Ask exactly ONE follow-up question
-- Never ask multiple questions
-- Continue the conversation naturally
+- Maximum 2-4 sentences
+- Keep responses short
+- Validate feelings briefly
+- Give one CBT reflection
+- Ask exactly ONE question
+- Continue naturally
 `;
 
-  const topics = {
-    anxiety: `
-CBT Focus:
-- anxiety triggers
+const topics={
+
+anxiety:`
+Focus:
+- triggers
 - grounding
 - breathing
 - catastrophic thinking
 `,
 
-    depression: `
-CBT Focus:
+depression:`
+Focus:
 - low mood
-- behavioral activation
-- self-worth
 - motivation
+- self worth
 `,
 
-    "academic stress": `
-CBT Focus:
-- study pressure
-- overwhelm reduction
+"academic stress":`
+Focus:
+- study stress
 - planning
-- task breakdown
+- overwhelm
 `,
 
-    overthinking: `
-CBT Focus:
+overthinking:`
+Focus:
 - thought loops
-- rumination
-- cognitive restructuring
+- reframing
 `,
 
-    relationships: `
-CBT Focus:
+relationships:`
+Focus:
 - emotions
 - communication
 - boundaries
 `,
 
-    general: `
-CBT Focus:
+general:`
+Focus:
 - emotional wellbeing
 `
-  };
-
-  return base + "\n" + (topics[topic] || topics.general);
 };
 
+return base+(topics[topic]||topics.general);
+
+};
+
+
 // ===============================
-// SESSION HISTORY
+// MEMORY
 // ===============================
-const getSessionMemory = async (sessionId) => {
-  const result = await pool.query(
-    `
-    SELECT sender, message
-    FROM chat_messages
-    WHERE session_id=$1
-    ORDER BY created_at ASC
-    LIMIT 10
+
+const getSessionMemory=async(sessionId)=>{
+
+const result=
+await pool.query(
+`
+SELECT sender,message
+FROM chat_messages
+WHERE session_id=$1
+ORDER BY created_at ASC
+LIMIT 10
 `,
-    [sessionId]
-  );
+[sessionId]
+);
 
-  return result.rows;
+return result.rows;
+
 };
 
-// ===============================
-// FORMAT MEMORY
-// ===============================
-const formatMemory = (messages) => {
-  return messages
-    .map(
-      (m) =>
-        `${m.sender === "user" ? "USER" : "AI"}: ${m.message}`
-    )
-    .join("\n");
+
+const formatMemory=(messages)=>{
+
+return messages
+.map(
+m=>`${m.sender.toUpperCase()}: ${m.message}`
+)
+.join("\n");
+
 };
 
-// ===============================
-// GENERATE FIRST SESSION MESSAGE
-// ===============================
-export const generateSessionStarter = async (
-  topic
-) => {
-  try {
 
-    const prompt = `
+// ===============================
+// SESSION STARTER
+// NOT LANGUAGE DEPENDENT
+// ===============================
+
+export const generateSessionStarter=
+async(topic)=>{
+
+try{
+
+const prompt=`
 
 ${getCBTPrompt(topic)}
 
-Selected Topic:
-
-${topic}
-
-Generate ONLY the first message of a CBT conversation.
+Generate ONLY the first message.
 
 Requirements:
 
-- Welcome naturally
+- Warm
 - Mention topic naturally
-- Be warm
 - Ask one question
-- Maximum 40 words
-- No introductions like "Hello user"
-- Sound like a real supportive person
-
+- Maximum 35 words
 `;
 
-    const result =
-      await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt
-      });
+const result=
+await ai.models.generateContent({
 
-    let reply =
-      result.text?.trim();
+model:"gemini-2.5-flash",
+contents:prompt
 
-    if (!reply || reply.length < 5) {
-      reply =
-        `I'm here with you today. What has been feeling difficult about ${topic}?`;
-    }
+});
 
-    if (reply.length > 250) {
-      reply =
-        reply.substring(0, 250);
-    }
+return result.text?.trim() ||
+`I'm here with you today. What has been difficult about ${topic}?`;
 
-    return reply;
+}
+catch(error){
 
-  } catch (error) {
+return `I'm here with you today. What has been difficult about ${topic}?`;
 
-    console.log(
-      "Starter Error:",
-      error
-    );
+}
 
-    return `I'm here with you today. What has been feeling difficult about ${topic}?`;
-  }
 };
+
 
 // ===============================
 // MAIN RESPONSE
 // ===============================
-export const generateResponse = async (
-  message,
-  topic = "general",
-  sessionId = null
-) => {
 
-  try {
+export const generateResponse=
+async(
 
-    let memory = "";
+message,
+topic="general",
+sessionId=null,
+language="english"
 
-    if (sessionId) {
+)=>{
 
-      const history =
-        await getSessionMemory(
-          sessionId
-        );
+try{
 
-      memory =
-        formatMemory(history);
-    }
+let memory="";
 
-    const prompt = `
+if(sessionId){
+
+const history=
+await getSessionMemory(sessionId);
+
+memory=
+formatMemory(history);
+
+}
+
+const prompt=`
 
 ${getCBTPrompt(topic)}
+
+${getLanguagePrompt(language)}
 
 Conversation History:
 
 ${memory || "No previous conversation"}
 
-Current User Message:
+Current Message:
 
 "${message}"
 
 Instructions:
 
+- Keep under 45 words
+- Use memory
 - Continue naturally
-- Use memory context
-- Avoid repeating previous responses
-- Keep response under 45 words
-- Ask exactly one follow-up question
-
+- Ask one question
 `;
 
-    const result =
-      await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt
-      });
+const result=
+await ai.models.generateContent({
 
-    let reply =
-      result.text?.trim();
+model:"gemini-2.5-flash",
+contents:prompt
 
-    // fallback
-    if (!reply || reply.length < 5) {
-      reply =
-        "I'm here with you. What feels most difficult right now?";
-    }
+});
 
-    // prevent huge replies
-    if (reply.length > 300) {
+let reply=
+result.text?.trim();
 
-      const shortened =
-        reply
-          .split(".")
-          .slice(0,2)
-          .join(".") + ".";
+if(!reply){
 
-      reply = shortened;
-    }
+reply=
+"I'm here with you. What feels difficult right now?";
+}
 
-    return reply;
+return reply;
 
-  } catch (error) {
+}
+catch(error){
 
-    console.log(
-      "Gemini Error:",
-      error
-    );
+console.log(
+"GEMINI ERROR:",
+error
+);
 
-    return "I'm here with you. What feels most difficult right now?";
-  }
+return "I'm here with you. What feels difficult right now?";
+}
 
 };
