@@ -6,6 +6,8 @@ import { connectDB } from "./src/config/db.js";
 
 import authRoutes from "./src/routes/auth.routes.js";
 import chatRoutes from "./src/routes/chat.routes.js";
+import journalRoutes from "./src/routes/journal.routes.js";
+import referralRoutes from "./src/routes/referral.routes.js";
 
 dotenv.config();
 
@@ -32,6 +34,8 @@ app.get("/", (req, res) => {
 // routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/chat",chatRoutes);
+app.use("/api/v1/journal", journalRoutes);
+app.use("/api/v1/referrals", referralRoutes);
 
 // DB connect
 connectDB();

@@ -32,16 +32,24 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     let dbId = decoded.id;
+    let tokenVersion = decoded.tokenVersion || 0;
 
     if (decoded.uid) {
       const userRes = await pool.query(
-        `SELECT id FROM users WHERE public_id = $1 LIMIT 1`,
+        `SELECT id, token_version FROM users WHERE public_id = $1 LIMIT 1`,
         [decoded.uid]
       );
 
       if (userRes.rowCount > 0) {
         dbId = userRes.rows[0].id;
+        tokenVersion = userRes.rows[0].token_version || 0;
       }
+    }
+
+    if ((decoded.tokenVersion || 0) !== tokenVersion) {
+      return res.status(401).json({
+        message: "Session expired. Please log in again.",
+      });
     }
 
     // 5. Attach user safely
@@ -50,6 +58,7 @@ export const protect = async (req, res, next) => {
       dbId,
       email: decoded.email,
       role: decoded.role || "user",
+      tokenVersion,
     };
 
     next();

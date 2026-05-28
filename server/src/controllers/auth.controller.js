@@ -3,6 +3,10 @@ import {
   loginUser,
   getUserProfile,
   completeOnboarding,
+  updateUserProfile,
+  updateAccountPreferences,
+  changeUserPassword,
+  revokeUserSessions,
 } from "../services/auth.service.js";
 
 // =======================
@@ -69,6 +73,76 @@ export const onboarding = async (req, res) => {
   } catch (err) {
     res.status(400).json({
       message: err.message,
+    });
+  }
+};
+
+// =======================
+// UPDATE PROFILE
+// =======================
+export const updateProfile = async (req, res) => {
+  try {
+    const result = await updateUserProfile(req.user.dbId, req.body);
+
+    res.json({
+      message: "Profile updated successfully",
+      user: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: err.message,
+    });
+  }
+};
+
+// =======================
+// UPDATE PREFERENCES
+// =======================
+export const updatePreferences = async (req, res) => {
+  try {
+    const result = await updateAccountPreferences(req.user.dbId, req.body);
+
+    res.json({
+      message: "Preferences saved successfully",
+      user: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: err.message,
+    });
+  }
+};
+
+// =======================
+// CHANGE PASSWORD
+// =======================
+export const changePassword = async (req, res) => {
+  try {
+    await changeUserPassword(req.user.dbId, req.body);
+
+    res.json({
+      message: "Password changed successfully",
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: err.message,
+    });
+  }
+};
+
+// =======================
+// LOGOUT / REVOKE SESSIONS
+// =======================
+export const logout = async (req, res) => {
+  try {
+    await revokeUserSessions(req.user.dbId);
+
+    res.json({
+      message: "Logged out successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Server error",
     });
   }
 };
