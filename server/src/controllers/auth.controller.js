@@ -64,14 +64,25 @@ export const getProfile = async (req, res) => {
 // =======================
 export const onboarding = async (req, res) => {
   try {
+    const { answers, totalScore } = req.body || {};
+
+    if (!Array.isArray(answers) || typeof totalScore !== "number") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid onboarding payload: 'answers' must be an array and 'totalScore' must be a number",
+      });
+    }
+
     const result = await completeOnboarding(req.user.dbId, req.body);
 
     res.json({
+      success: true,
       message: "Onboarding saved successfully",
       data: result,
     });
   } catch (err) {
     res.status(400).json({
+      success: false,
       message: err.message,
     });
   }

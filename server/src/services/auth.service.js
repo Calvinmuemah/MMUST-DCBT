@@ -7,7 +7,8 @@ import { ensureReferralCode } from "./referral.service.js";
 const selectUserFields = `
   id, public_id, name, email, password, stress, challenge, mood,
   notifications_enabled, email_updates, token_version,
-  referral_code, referred_by_user_id, referral_reward_points, referral_invites_count
+  referral_code, referred_by_user_id, referral_reward_points, referral_invites_count,
+  onboarding_answers, onboarding_total_score, onboarding_risk_level, onboarding_completed, onboarding_completed_at
 `;
 
 const toUserResponse = (user) => ({
@@ -23,6 +24,11 @@ const toUserResponse = (user) => ({
   referredByUserId: user.referred_by_user_id,
   referralRewardPoints: user.referral_reward_points || 0,
   referralInvitesCount: user.referral_invites_count || 0,
+  onboardingAnswers: user.onboarding_answers || null,
+  onboardingTotalScore: user.onboarding_total_score || null,
+  onboardingRiskLevel: user.onboarding_risk_level || null,
+  onboardingCompleted: Boolean(user.onboarding_completed),
+  onboardingCompletedAt: user.onboarding_completed_at || null,
 });
 
 const getUserById = async (userId) => {
@@ -304,23 +310,63 @@ export const revokeUserSessions = async (userId) => {
 // ONBOARDING (UPDATE USER CBT PROFILE)
 // =======================
 export const completeOnboarding = async (userId, data) => {
-  const { stress, challenge, mood } = data;
+  // Expecting payload from frontend: { answers: [...], totalScore: number, riskLevel: string }
+  const answers = data.answers;
+  const totalScore = data.totalScore;
+  const riskLevel = data.riskLevel ?? null;
+
+  if (answers !== null && answers !== undefined && !Array.isArray(answers)) {
+    throw new Error("Invalid onboarding data: 'answers' must be an array");
+  }
+
+  if (totalScore !== null && totalScore !== undefined && typeof totalScore !== 'number') {
+    throw new Error("Invalid onboarding data: 'totalScore' must be a number");
+  }
+
+  // Strict schema validation for each answer item
+  if (Array.isArray(answers)) {
+    for (let i = 0; i < answers.length; i += 1) {
+      const item = answers[i];
+
+      if (typeof item !== 'object' || item === null) {
+        throw new Error(`Invalid onboarding answer at index ${i}: must be an object`);
+      }
+
+      const { questionNumber, question, answer, score } = item;
+
+      if (questionNumber === undefined || typeof questionNumber !== 'number') {
+        throw new Error(`Invalid onboarding answer at index ${i}: 'questionNumber' must be a number`);
+      }
+
+      if (question === undefined || typeof question !== 'string') {
+        throw new Error(`Invalid onboarding answer at index ${i}: 'question' must be a string`);
+      }
+
+      if (answer === undefined || typeof answer !== 'string') {
+        throw new Error(`Invalid onboarding answer at index ${i}: 'answer' must be a string`);
+      }
+
+      if (score === undefined || typeof score !== 'number') {
+        throw new Error(`Invalid onboarding answer at index ${i}: 'score' must be a number`);
+      }
+    }
+  }
 
   const updated = await pool.query(
     `UPDATE users
-     SET stress = $1,
-         challenge = $2,
-         mood = $3
+     SET onboarding_answers = $1,
+         onboarding_total_score = $2,
+         onboarding_risk_level = $3,
+         onboarding_completed = TRUE,
+         onboarding_completed_at = NOW()
      WHERE id = $4
      RETURNING ${selectUserFields}`,
-    [stress, challenge, mood, userId]
+    [answers ? JSON.stringify(answers) : null, totalScore, riskLevel, userId]
   );
 
   const profile = updated.rows[0];
 
-  return profile
-    ? toUserResponse(profile)
-    : null;
+  return profile ? toUserResponse(profile) : null;
 };
 
 // =======================
