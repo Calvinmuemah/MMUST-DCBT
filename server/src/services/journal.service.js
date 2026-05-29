@@ -37,6 +37,10 @@ const resolveJournalEntryId = async (entryIdentifier, userId) => {
   return Number.isInteger(numericId) ? numericId : null;
 };
 
+const isMissingJournalTableError = (error) => {
+  return error?.code === "42P01" || error?.code === "42703";
+};
+
 const getUserSnapshot = async (userId) => {
   const result = await pool.query(
     `SELECT id, public_id, name, email,
@@ -92,24 +96,44 @@ const getUserSnapshot = async (userId) => {
 };
 
 const getChatHistory = async (userId) => {
-  const sessionsResult = await pool.query(
-    `SELECT id, public_id, topic, created_at
-     FROM chat_sessions
-     WHERE user_id = $1
-     ORDER BY created_at DESC`,
-    [userId]
-  );
+  let sessionsResult;
+
+  try {
+    sessionsResult = await pool.query(
+      `SELECT id, public_id, topic, created_at
+       FROM chat_sessions
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+  } catch (error) {
+    if (isMissingJournalTableError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
 
   const sessions = [];
 
   for (const session of sessionsResult.rows) {
-    const messagesResult = await pool.query(
-      `SELECT sender, message, created_at
-       FROM chat_messages
-       WHERE session_id = $1
-       ORDER BY created_at ASC`,
-      [session.id]
-    );
+    let messagesResult;
+
+    try {
+      messagesResult = await pool.query(
+        `SELECT sender, message, created_at
+         FROM chat_messages
+         WHERE session_id = $1
+         ORDER BY created_at ASC`,
+        [session.id]
+      );
+    } catch (error) {
+      if (isMissingJournalTableError(error)) {
+        messagesResult = { rows: [] };
+      } else {
+        throw error;
+      }
+    }
 
     sessions.push({
       id: session.public_id || session.id,
@@ -236,104 +260,122 @@ const buildTimeline = async (userId, filter) => {
   let timeline = [];
 
   if (kind === "day") {
-    const result = await pool.query(
-      `SELECT DATE(bucket_date) AS day, SUM(count)::int AS count
-       FROM (
-         SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
-         FROM user_login_events
-         WHERE user_id = $1
-         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY created_at::date
+    try {
+      const result = await pool.query(
+        `SELECT DATE(bucket_date) AS day, SUM(count)::int AS count
+         FROM (
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM user_login_events
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
 
-         UNION ALL
+           UNION ALL
 
-         SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
-         FROM chat_messages cm
-         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
-         WHERE cs.user_id = $1
-         AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY cm.created_at::date
+           SELECT cm.created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM chat_messages cm
+           INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+           WHERE cs.user_id = $1
+           AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY cm.created_at::date
 
-         UNION ALL
+           UNION ALL
 
-         SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
-         FROM journal_entries
-         WHERE user_id = $1
-         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY created_at::date
-       ) activity
-       GROUP BY DATE(bucket_date)
-       ORDER BY day ASC`,
-      [userId]
-    );
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM journal_entries
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
+         ) activity
+         GROUP BY DATE(bucket_date)
+         ORDER BY day ASC`,
+        [userId]
+      );
 
-    timeline = fillDailySeries(result.rows, buckets);
+      timeline = fillDailySeries(result.rows, buckets);
+    } catch (error) {
+      if (!isMissingJournalTableError(error)) {
+        throw error;
+      }
+    }
   } else if (kind === "week") {
-    const result = await pool.query(
-      `SELECT DATE_TRUNC('week', bucket_date)::date AS bucket, SUM(count)::int AS count
-       FROM (
-         SELECT created_at AS bucket_date, COUNT(*)::int AS count
-         FROM user_login_events
-         WHERE user_id = $1
-         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY created_at::date
+    try {
+      const result = await pool.query(
+        `SELECT DATE_TRUNC('week', bucket_date)::date AS bucket, SUM(count)::int AS count
+         FROM (
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM user_login_events
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
 
-         UNION ALL
+           UNION ALL
 
-         SELECT cm.created_at AS bucket_date, COUNT(*)::int AS count
-         FROM chat_messages cm
-         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
-         WHERE cs.user_id = $1
-         AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY cm.created_at::date
+           SELECT cm.created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM chat_messages cm
+           INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+           WHERE cs.user_id = $1
+           AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY cm.created_at::date
 
-         UNION ALL
+           UNION ALL
 
-         SELECT created_at AS bucket_date, COUNT(*)::int AS count
-         FROM journal_entries
-         WHERE user_id = $1
-         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY created_at::date
-       ) activity
-       GROUP BY DATE_TRUNC('week', bucket_date)::date
-       ORDER BY bucket ASC`,
-      [userId]
-    );
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM journal_entries
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
+         ) activity
+         GROUP BY DATE_TRUNC('week', bucket_date)::date
+         ORDER BY bucket ASC`,
+        [userId]
+      );
 
-    timeline = fillWeekSeries(result.rows, buckets);
+      timeline = fillWeekSeries(result.rows, buckets);
+    } catch (error) {
+      if (!isMissingJournalTableError(error)) {
+        throw error;
+      }
+    }
   } else {
-    const result = await pool.query(
-      `SELECT DATE_TRUNC('month', bucket_date)::date AS bucket, SUM(count)::int AS count
-       FROM (
-         SELECT created_at AS bucket_date, COUNT(*)::int AS count
-         FROM user_login_events
-         WHERE user_id = $1
-         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY created_at::date
+    try {
+      const result = await pool.query(
+        `SELECT DATE_TRUNC('month', bucket_date)::date AS bucket, SUM(count)::int AS count
+         FROM (
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM user_login_events
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
 
-         UNION ALL
+           UNION ALL
 
-         SELECT cm.created_at AS bucket_date, COUNT(*)::int AS count
-         FROM chat_messages cm
-         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
-         WHERE cs.user_id = $1
-         AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY cm.created_at::date
+           SELECT cm.created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM chat_messages cm
+           INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+           WHERE cs.user_id = $1
+           AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY cm.created_at::date
 
-         UNION ALL
+           UNION ALL
 
-         SELECT created_at AS bucket_date, COUNT(*)::int AS count
-         FROM journal_entries
-         WHERE user_id = $1
-         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
-         GROUP BY created_at::date
-       ) activity
-       GROUP BY DATE_TRUNC('month', bucket_date)::date
-       ORDER BY bucket ASC`,
-      [userId]
-    );
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM journal_entries
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
+         ) activity
+         GROUP BY DATE_TRUNC('month', bucket_date)::date
+         ORDER BY bucket ASC`,
+        [userId]
+      );
 
-    timeline = fillMonthSeries(result.rows, buckets);
+      timeline = fillMonthSeries(result.rows, buckets);
+    } catch (error) {
+      if (!isMissingJournalTableError(error)) {
+        throw error;
+      }
+    }
   }
 
   return {
@@ -343,42 +385,71 @@ const buildTimeline = async (userId, filter) => {
 };
 
 const getAttendanceSummary = async (userId) => {
-  const loginCount = await pool.query(
-    `SELECT COUNT(*)::int AS total
-     FROM user_login_events
-     WHERE user_id = $1`,
-    [userId]
-  );
+  let loginCount = { rows: [{ total: 0 }] };
+  let chatCount = { rows: [{ total: 0 }] };
+  let journalCount = { rows: [{ total: 0 }] };
+  let activeDays = { rows: [{ total: 0 }] };
 
-  const chatCount = await pool.query(
-    `SELECT COUNT(*)::int AS total
-     FROM chat_messages cm
-     INNER JOIN chat_sessions cs ON cs.id = cm.session_id
-     WHERE cs.user_id = $1`,
-    [userId]
-  );
+  try {
+    loginCount = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM user_login_events
+       WHERE user_id = $1`,
+      [userId]
+    );
+  } catch (error) {
+    if (!isMissingJournalTableError(error)) {
+      throw error;
+    }
+  }
 
-  const journalCount = await pool.query(
-    `SELECT COUNT(*)::int AS total
-     FROM journal_entries
-     WHERE user_id = $1`,
-    [userId]
-  );
-
-  const activeDays = await pool.query(
-    `SELECT COUNT(DISTINCT day)::int AS total
-     FROM (
-       SELECT created_at::date AS day FROM user_login_events WHERE user_id = $1
-       UNION
-       SELECT cm.created_at::date AS day
+  try {
+    chatCount = await pool.query(
+      `SELECT COUNT(*)::int AS total
        FROM chat_messages cm
        INNER JOIN chat_sessions cs ON cs.id = cm.session_id
-       WHERE cs.user_id = $1
-       UNION
-       SELECT created_at::date AS day FROM journal_entries WHERE user_id = $1
-     ) activity_days`,
-    [userId]
-  );
+       WHERE cs.user_id = $1`,
+      [userId]
+    );
+  } catch (error) {
+    if (!isMissingJournalTableError(error)) {
+      throw error;
+    }
+  }
+
+  try {
+    journalCount = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM journal_entries
+       WHERE user_id = $1`,
+      [userId]
+    );
+  } catch (error) {
+    if (!isMissingJournalTableError(error)) {
+      throw error;
+    }
+  }
+
+  try {
+    activeDays = await pool.query(
+      `SELECT COUNT(DISTINCT day)::int AS total
+       FROM (
+         SELECT created_at::date AS day FROM user_login_events WHERE user_id = $1
+         UNION
+         SELECT cm.created_at::date AS day
+         FROM chat_messages cm
+         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+         WHERE cs.user_id = $1
+         UNION
+         SELECT created_at::date AS day FROM journal_entries WHERE user_id = $1
+       ) activity_days`,
+      [userId]
+    );
+  } catch (error) {
+    if (!isMissingJournalTableError(error)) {
+      throw error;
+    }
+  }
 
   return {
     loginCount: loginCount.rows[0]?.total || 0,
