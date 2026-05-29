@@ -78,6 +78,25 @@ const getTodayDailyAssessment = async (userId) => {
   }
 };
 
+const recordLoginEvent = async (userId) => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_login_events (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(
+      `INSERT INTO user_login_events (user_id) VALUES ($1)`,
+      [userId]
+    );
+  } catch (error) {
+    console.error("recordLoginEvent error:", error.message);
+  }
+};
+
 // =======================
 // REGISTER (AUTH ONLY)
 // =======================
@@ -149,6 +168,8 @@ export const loginUser = async (data) => {
     email: user.email,
     tokenVersion: user.token_version || 0,
   });
+
+  await recordLoginEvent(user.id);
 
   return {
     user: toUserResponse({

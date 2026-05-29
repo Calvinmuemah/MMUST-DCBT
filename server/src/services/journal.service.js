@@ -16,11 +16,7 @@ const makeJournalTitle = (content) => {
     .filter(Boolean)
     .slice(0, 5);
 
-  if (words.length === 0) {
-    return null;
-  }
-
-  return words.join(" ");
+  return words.length > 0 ? words.join(" ") : null;
 };
 
 const resolveJournalEntryId = async (entryIdentifier, userId) => {
@@ -39,6 +35,357 @@ const resolveJournalEntryId = async (entryIdentifier, userId) => {
 
   const numericId = Number(entryIdentifier);
   return Number.isInteger(numericId) ? numericId : null;
+};
+
+const getUserSnapshot = async (userId) => {
+  const result = await pool.query(
+    `SELECT id, public_id, name, email,
+            onboarding_answers, onboarding_total_score, onboarding_risk_level,
+            onboarding_completed, onboarding_completed_at
+     FROM users
+     WHERE id = $1
+     LIMIT 1`,
+    [userId]
+  );
+
+  const user = result.rows[0];
+
+  if (!user) {
+    return null;
+  }
+
+  const dailyAssessmentResult = await pool.query(
+    `SELECT id, stress_level, main_challenge, overwhelm_frequency,
+            answers, total_score, risk_level, assessment_date, created_at
+     FROM daily_assessments
+     WHERE user_id = $1
+     ORDER BY assessment_date DESC, created_at DESC
+     LIMIT 1`,
+    [userId]
+  );
+
+  const dailyAssessment = dailyAssessmentResult.rows[0] || null;
+
+  return {
+    id: user.public_id || user.id,
+    name: user.name,
+    email: user.email,
+    onboardingCompleted: Boolean(user.onboarding_completed),
+    onboardingCompletedAt: user.onboarding_completed_at || null,
+    onboardingAnswers: user.onboarding_answers || null,
+    onboardingTotalScore: user.onboarding_total_score || null,
+    onboardingRiskLevel: user.onboarding_risk_level || null,
+    dailyAssessment: dailyAssessment
+      ? {
+          id: dailyAssessment.id,
+          stressLevel: dailyAssessment.stress_level,
+          mainChallenge: dailyAssessment.main_challenge,
+          overwhelmFrequency: dailyAssessment.overwhelm_frequency,
+          answers: dailyAssessment.answers || null,
+          totalScore: dailyAssessment.total_score,
+          riskLevel: dailyAssessment.risk_level,
+          assessmentDate: dailyAssessment.assessment_date,
+          createdAt: dailyAssessment.created_at,
+        }
+      : null,
+  };
+};
+
+const getChatHistory = async (userId) => {
+  const sessionsResult = await pool.query(
+    `SELECT id, public_id, topic, created_at
+     FROM chat_sessions
+     WHERE user_id = $1
+     ORDER BY created_at DESC`,
+    [userId]
+  );
+
+  const sessions = [];
+
+  for (const session of sessionsResult.rows) {
+    const messagesResult = await pool.query(
+      `SELECT sender, message, created_at
+       FROM chat_messages
+       WHERE session_id = $1
+       ORDER BY created_at ASC`,
+      [session.id]
+    );
+
+    sessions.push({
+      id: session.public_id || session.id,
+      topic: session.topic,
+      createdAt: session.created_at,
+      messages: messagesResult.rows.map((message) => ({
+        sender: message.sender,
+        message: message.message,
+        createdAt: message.created_at,
+      })),
+    });
+  }
+
+  return sessions;
+};
+
+const getFilterWindow = (filter) => {
+  const normalized = ["weekly", "monthly", "yearly"].includes(filter)
+    ? filter
+    : "weekly";
+
+  if (normalized === "weekly") {
+    return {
+      filter: normalized,
+      sqlInterval: "6 days",
+      buckets: 7,
+      kind: "day",
+    };
+  }
+
+  if (normalized === "monthly") {
+    return {
+      filter: normalized,
+      sqlInterval: "12 weeks",
+      buckets: 4,
+      kind: "week",
+    };
+  }
+
+  return {
+    filter: normalized,
+    sqlInterval: "11 months",
+    buckets: 12,
+    kind: "month",
+  };
+};
+
+const fillDailySeries = (rows, bucketsBack) => {
+  const counts = new Map(
+    rows.map((row) => [new Date(row.day).toISOString().slice(0, 10), Number(row.count)])
+  );
+
+  const series = [];
+  const today = new Date();
+
+  for (let index = bucketsBack - 1; index >= 0; index -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - index);
+
+    const key = date.toISOString().slice(0, 10);
+
+    series.push({
+      label: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      value: counts.get(key) || 0,
+      date: key,
+    });
+  }
+
+  return series;
+};
+
+const fillWeekSeries = (rows, weeksBack) => {
+  const counts = new Map(
+    rows.map((row) => [new Date(row.bucket).toISOString().slice(0, 10), Number(row.count)])
+  );
+
+  const series = [];
+  const today = new Date();
+
+  for (let index = weeksBack - 1; index >= 0; index -= 1) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - index * 7);
+
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - date.getDay());
+    const key = startOfWeek.toISOString().slice(0, 10);
+
+    series.push({
+      label: startOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      value: counts.get(key) || 0,
+      date: key,
+    });
+  }
+
+  return series;
+};
+
+const fillMonthSeries = (rows, monthsBack) => {
+  const counts = new Map(
+    rows.map((row) => [new Date(row.bucket).toISOString().slice(0, 7), Number(row.count)])
+  );
+
+  const series = [];
+  const current = new Date();
+
+  for (let index = monthsBack - 1; index >= 0; index -= 1) {
+    const date = new Date(current.getFullYear(), current.getMonth() - index, 1);
+    const key = date.toISOString().slice(0, 7);
+
+    series.push({
+      label: date.toLocaleDateString("en-US", { month: "short" }),
+      value: counts.get(key) || 0,
+      date: key,
+    });
+  }
+
+  return series;
+};
+
+const buildTimeline = async (userId, filter) => {
+  const window = getFilterWindow(filter);
+  const { filter: normalizedFilter, sqlInterval, buckets, kind } = window;
+
+  let timeline = [];
+
+  if (kind === "day") {
+    const result = await pool.query(
+      `SELECT DATE(bucket_date) AS day, SUM(count)::int AS count
+       FROM (
+         SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+         FROM user_login_events
+         WHERE user_id = $1
+         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY created_at::date
+
+         UNION ALL
+
+         SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+         FROM chat_messages cm
+         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+         WHERE cs.user_id = $1
+         AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY cm.created_at::date
+
+         UNION ALL
+
+         SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+         FROM journal_entries
+         WHERE user_id = $1
+         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY created_at::date
+       ) activity
+       GROUP BY DATE(bucket_date)
+       ORDER BY day ASC`,
+      [userId]
+    );
+
+    timeline = fillDailySeries(result.rows, buckets);
+  } else if (kind === "week") {
+    const result = await pool.query(
+      `SELECT DATE_TRUNC('week', bucket_date)::date AS bucket, SUM(count)::int AS count
+       FROM (
+         SELECT created_at AS bucket_date, COUNT(*)::int AS count
+         FROM user_login_events
+         WHERE user_id = $1
+         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY created_at::date
+
+         UNION ALL
+
+         SELECT cm.created_at AS bucket_date, COUNT(*)::int AS count
+         FROM chat_messages cm
+         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+         WHERE cs.user_id = $1
+         AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY cm.created_at::date
+
+         UNION ALL
+
+         SELECT created_at AS bucket_date, COUNT(*)::int AS count
+         FROM journal_entries
+         WHERE user_id = $1
+         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY created_at::date
+       ) activity
+       GROUP BY DATE_TRUNC('week', bucket_date)::date
+       ORDER BY bucket ASC`,
+      [userId]
+    );
+
+    timeline = fillWeekSeries(result.rows, buckets);
+  } else {
+    const result = await pool.query(
+      `SELECT DATE_TRUNC('month', bucket_date)::date AS bucket, SUM(count)::int AS count
+       FROM (
+         SELECT created_at AS bucket_date, COUNT(*)::int AS count
+         FROM user_login_events
+         WHERE user_id = $1
+         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY created_at::date
+
+         UNION ALL
+
+         SELECT cm.created_at AS bucket_date, COUNT(*)::int AS count
+         FROM chat_messages cm
+         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+         WHERE cs.user_id = $1
+         AND cm.created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY cm.created_at::date
+
+         UNION ALL
+
+         SELECT created_at AS bucket_date, COUNT(*)::int AS count
+         FROM journal_entries
+         WHERE user_id = $1
+         AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+         GROUP BY created_at::date
+       ) activity
+       GROUP BY DATE_TRUNC('month', bucket_date)::date
+       ORDER BY bucket ASC`,
+      [userId]
+    );
+
+    timeline = fillMonthSeries(result.rows, buckets);
+  }
+
+  return {
+    filter: normalizedFilter,
+    timeline,
+  };
+};
+
+const getAttendanceSummary = async (userId) => {
+  const loginCount = await pool.query(
+    `SELECT COUNT(*)::int AS total
+     FROM user_login_events
+     WHERE user_id = $1`,
+    [userId]
+  );
+
+  const chatCount = await pool.query(
+    `SELECT COUNT(*)::int AS total
+     FROM chat_messages cm
+     INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+     WHERE cs.user_id = $1`,
+    [userId]
+  );
+
+  const journalCount = await pool.query(
+    `SELECT COUNT(*)::int AS total
+     FROM journal_entries
+     WHERE user_id = $1`,
+    [userId]
+  );
+
+  const activeDays = await pool.query(
+    `SELECT COUNT(DISTINCT day)::int AS total
+     FROM (
+       SELECT created_at::date AS day FROM user_login_events WHERE user_id = $1
+       UNION
+       SELECT cm.created_at::date AS day
+       FROM chat_messages cm
+       INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+       WHERE cs.user_id = $1
+       UNION
+       SELECT created_at::date AS day FROM journal_entries WHERE user_id = $1
+     ) activity_days`,
+    [userId]
+  );
+
+  return {
+    loginCount: loginCount.rows[0]?.total || 0,
+    chatCount: chatCount.rows[0]?.total || 0,
+    journalCount: journalCount.rows[0]?.total || 0,
+    activeDays: activeDays.rows[0]?.total || 0,
+  };
 };
 
 export const createJournalEntry = async (userId, data) => {
@@ -213,56 +560,8 @@ export const deleteJournalEntry = async (userId, entryIdentifier) => {
   return result.rowCount > 0;
 };
 
-const fillWeekSeries = (rows, bucketsBack) => {
-  const counts = new Map(
-    rows.map((row) => [new Date(row.day).toISOString().slice(0, 10), Number(row.count)])
-  );
-
-  const series = [];
-  const today = new Date();
-
-  for (let index = bucketsBack - 1; index >= 0; index -= 1) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - index);
-
-    const key = date.toISOString().slice(0, 10);
-
-    series.push({
-      label: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      value: counts.get(key) || 0,
-      date: key,
-    });
-  }
-
-  return series;
-};
-
-const fillMonthSeries = (rows, monthsBack) => {
-  const counts = new Map(
-    rows.map((row) => [new Date(row.bucket).toISOString().slice(0, 7), Number(row.count)])
-  );
-
-  const series = [];
-  const current = new Date();
-
-  for (let index = monthsBack - 1; index >= 0; index -= 1) {
-    const date = new Date(current.getFullYear(), current.getMonth() - index, 1);
-    const key = date.toISOString().slice(0, 7);
-
-    series.push({
-      label: date.toLocaleDateString("en-US", { month: "short" }),
-      value: counts.get(key) || 0,
-      date: key,
-    });
-  }
-
-  return series;
-};
-
 export const getJournalReports = async (userId, filter = "weekly") => {
-  const normalizedFilter = ["weekly", "monthly", "yearly"].includes(filter)
-    ? filter
-    : "weekly";
+  const { filter: normalizedFilter, timeline } = await buildTimeline(userId, filter);
 
   const moodResult = await pool.query(
     `SELECT mood, COUNT(*)::int AS count
@@ -272,46 +571,6 @@ export const getJournalReports = async (userId, filter = "weekly") => {
      ORDER BY count DESC, mood ASC`,
     [userId]
   );
-
-  let timeline = [];
-
-  if (normalizedFilter === "weekly") {
-    const result = await pool.query(
-      `SELECT DATE(created_at) AS day, COUNT(*)::int AS count
-       FROM journal_entries
-       WHERE user_id = $1
-       AND created_at >= NOW() - INTERVAL '6 days'
-       GROUP BY DATE(created_at)
-       ORDER BY day ASC`,
-      [userId]
-    );
-
-    timeline = fillDailySeries(result.rows, 7);
-  } else if (normalizedFilter === "monthly") {
-    const result = await pool.query(
-      `SELECT DATE_TRUNC('week', created_at)::date AS bucket, COUNT(*)::int AS count
-       FROM journal_entries
-       WHERE user_id = $1
-       AND created_at >= NOW() - INTERVAL '12 weeks'
-       GROUP BY bucket
-       ORDER BY bucket ASC`,
-      [userId]
-    );
-
-    timeline = fillWeekSeries(result.rows, 4);
-  } else {
-    const result = await pool.query(
-      `SELECT DATE_TRUNC('month', created_at)::date AS bucket, COUNT(*)::int AS count
-       FROM journal_entries
-       WHERE user_id = $1
-       AND created_at >= NOW() - INTERVAL '11 months'
-       GROUP BY bucket
-       ORDER BY bucket ASC`,
-      [userId]
-    );
-
-    timeline = fillMonthSeries(result.rows, 12);
-  }
 
   const totalsResult = await pool.query(
     `SELECT COUNT(*)::int AS total
@@ -329,26 +588,46 @@ export const getJournalReports = async (userId, filter = "weekly") => {
     [userId]
   );
 
-  const latest = latestResult.rows[0];
+  const attendance = await getAttendanceSummary(userId);
 
   return {
     filter: normalizedFilter,
     totalEntries: totalsResult.rows[0]?.total || 0,
+    attendance: {
+      ...attendance,
+      totalActivity: attendance.loginCount + attendance.chatCount + attendance.journalCount,
+    },
     moodBreakdown: moodResult.rows.map((row) => ({
       mood: row.mood,
       count: Number(row.count),
     })),
     timeline,
-    latestEntry: latest
+    latestEntry: latestResult.rows[0]
       ? {
-          id: latest.public_id || latest.id,
-          title: latest.title,
-          content: latest.content,
-          mood: latest.mood,
-          insight: latest.insight,
-          createdAt: latest.created_at,
-          updatedAt: latest.updated_at,
+          id: latestResult.rows[0].public_id || latestResult.rows[0].id,
+          title: latestResult.rows[0].title,
+          content: latestResult.rows[0].content,
+          mood: latestResult.rows[0].mood,
+          insight: latestResult.rows[0].insight,
+          createdAt: latestResult.rows[0].created_at,
+          updatedAt: latestResult.rows[0].updated_at,
         }
       : null,
+  };
+};
+
+export const getJournalDashboard = async (userId, filter = "weekly") => {
+  const [profile, reports, journalEntries, chatHistory] = await Promise.all([
+    getUserSnapshot(userId),
+    getJournalReports(userId, filter),
+    listJournalEntries(userId, 50, 0),
+    getChatHistory(userId),
+  ]);
+
+  return {
+    profile,
+    reports,
+    journalEntries,
+    chatHistory,
   };
 };

@@ -2,6 +2,7 @@ import {
   createJournalEntry,
   deleteJournalEntry,
   getJournalEntry,
+  getJournalDashboard,
   getJournalReports,
   listJournalEntries,
   updateJournalEntry,
@@ -107,6 +108,39 @@ export const getReports = async (req, res) => {
 
     res.json({
       data: reports,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+export const getDashboard = async (req, res) => {
+  try {
+    const filter = req.query.filter || "weekly";
+    const dashboard = await getJournalDashboard(req.user.dbId, filter);
+
+    res.json({
+      data: dashboard,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+export const getHistory = async (req, res) => {
+  try {
+    const filter = req.query.filter || "weekly";
+    const dashboard = await getJournalDashboard(req.user.dbId, filter);
+
+    res.json({
+      data: {
+        feelings: dashboard.journalEntries,
+        chats: dashboard.chatHistory,
+      },
     });
   } catch (err) {
     res.status(500).json({
