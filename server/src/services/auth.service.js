@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { pool } from "../config/db.js";
 import { generateToken } from "../utils/jwt.js";
-import { ensureUserPublicId } from "../utils/ids.js";
+import { ensureUserPublicId, generatePublicId } from "../utils/ids.js";
 import { ensureReferralCode } from "./referral.service.js";
 
 const selectUserFields = `
@@ -139,9 +139,10 @@ export const loginUser = async (data) => {
     throw new Error("Invalid credentials");
   }
 
-  const publicId = user.public_id || (await ensureUserPublicId(user.id, user.email));
-  const referralCode = await ensureReferralCode(user.id, user.email);
   const freshUser = await getUserById(user.id);
+  const publicId = user.public_id || generatePublicId(`user:${user.id}:${user.email}`);
+  const referralCode = freshUser?.referral_code || user.referral_code || null;
+  const todayDailyAssessment = await getTodayDailyAssessment(user.id);
   const token = generateToken({
     id: user.id,
     uid: publicId,
@@ -153,10 +154,22 @@ export const loginUser = async (data) => {
     user: toUserResponse({
       ...(freshUser || user),
       public_id: publicId,
-      referral_code: freshUser?.referral_code || referralCode,
+      referral_code: referralCode,
     }),
-    dailyAssessmentRequired: false,
-    dailyAssessment: null,
+    dailyAssessmentRequired: !todayDailyAssessment,
+    dailyAssessment: todayDailyAssessment
+      ? {
+          id: todayDailyAssessment.id,
+          stressLevel: todayDailyAssessment.stress_level,
+          mainChallenge: todayDailyAssessment.main_challenge,
+          overwhelmFrequency: todayDailyAssessment.overwhelm_frequency,
+          answers: todayDailyAssessment.answers || null,
+          totalScore: todayDailyAssessment.total_score,
+          riskLevel: todayDailyAssessment.risk_level,
+          assessmentDate: todayDailyAssessment.assessment_date,
+          createdAt: todayDailyAssessment.created_at,
+        }
+      : null,
     token,
   };
 };
