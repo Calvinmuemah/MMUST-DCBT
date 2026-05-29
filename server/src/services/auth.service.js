@@ -5,7 +5,7 @@ import { ensureUserPublicId } from "../utils/ids.js";
 import { ensureReferralCode } from "./referral.service.js";
 
 const selectUserFields = `
-  id, public_id, name, email, password, stress, challenge, mood,
+  id, public_id, name, email, password,
   notifications_enabled, email_updates, token_version,
   referral_code, referred_by_user_id, referral_reward_points, referral_invites_count,
   onboarding_answers, onboarding_total_score, onboarding_risk_level, onboarding_completed, onboarding_completed_at
@@ -15,9 +15,6 @@ const toUserResponse = (user) => ({
   id: user.public_id || user.id,
   name: user.name,
   email: user.email,
-  stress: user.stress,
-  challenge: user.challenge,
-  mood: user.mood,
   notificationsEnabled: user.notifications_enabled,
   emailUpdates: user.email_updates,
   referralCode: user.referral_code,
@@ -53,6 +50,32 @@ const getUserByEmail = async (email) => {
   );
 
   return result.rows[0] || null;
+};
+
+const isMissingDailyAssessmentsSchema = (error) => {
+  return error?.code === "42P01" || error?.code === "42703";
+};
+
+const getTodayDailyAssessment = async (userId) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, user_id, stress_level, main_challenge, overwhelm_frequency,
+              answers, total_score, risk_level, assessment_date, created_at
+       FROM daily_assessments
+       WHERE user_id = $1
+       AND assessment_date = CURRENT_DATE
+       LIMIT 1`,
+      [userId]
+    );
+
+    return result.rows[0] || null;
+  } catch (error) {
+    if (isMissingDailyAssessmentsSchema(error)) {
+      return null;
+    }
+
+    throw error;
+  }
 };
 
 // =======================
@@ -132,6 +155,8 @@ export const loginUser = async (data) => {
       public_id: publicId,
       referral_code: freshUser?.referral_code || referralCode,
     }),
+    dailyAssessmentRequired: false,
+    dailyAssessment: null,
     token,
   };
 };
@@ -169,21 +194,6 @@ export const updateUserProfile = async (userId, data) => {
   if (data.email !== undefined) {
     updates.push(`email = $${updates.length + 1}`);
     values.push(String(data.email).trim().toLowerCase());
-  }
-
-  if (data.stress !== undefined) {
-    updates.push(`stress = $${updates.length + 1}`);
-    values.push(data.stress);
-  }
-
-  if (data.challenge !== undefined) {
-    updates.push(`challenge = $${updates.length + 1}`);
-    values.push(data.challenge);
-  }
-
-  if (data.mood !== undefined) {
-    updates.push(`mood = $${updates.length + 1}`);
-    values.push(data.mood);
   }
 
   if (updates.length === 0) {
@@ -375,12 +385,96 @@ export const completeOnboarding = async (userId, data) => {
 
 // Get user mental profile (for AI personalization later)
 export const getUserCBTContext = async (userId) => {
+  return {
+    userId,
+  };
+};
+
+export const getDailyAssessmentStatus = async (userId) => {
+  const todayDailyAssessment = await getTodayDailyAssessment(userId);
+
+  return {
+    required: !todayDailyAssessment,
+    assessment: todayDailyAssessment
+      ? {
+          id: todayDailyAssessment.id,
+          stressLevel: todayDailyAssessment.stress_level,
+          mainChallenge: todayDailyAssessment.main_challenge,
+          overwhelmFrequency: todayDailyAssessment.overwhelm_frequency,
+          answers: todayDailyAssessment.answers || null,
+          totalScore: todayDailyAssessment.total_score,
+          riskLevel: todayDailyAssessment.risk_level,
+          assessmentDate: todayDailyAssessment.assessment_date,
+          createdAt: todayDailyAssessment.created_at,
+        }
+      : null,
+  };
+};
+
+export const submitDailyAssessment = async (userId, data) => {
+  const stressLevel = String(data?.stressLevel || "").trim();
+  const mainChallenge = String(data?.mainChallenge || "").trim();
+  const overwhelmFrequency = String(data?.overwhelmFrequency || "").trim();
+  const answers = data?.answers;
+  const totalScore = data?.totalScore;
+  const riskLevel = data?.riskLevel !== undefined && data?.riskLevel !== null
+    ? String(data.riskLevel).trim()
+    : null;
+
+  if (!stressLevel || !mainChallenge || !overwhelmFrequency) {
+    throw new Error("stressLevel, mainChallenge, and overwhelmFrequency are required");
+  }
+
+  if (answers !== undefined && answers !== null && !Array.isArray(answers)) {
+    throw new Error("answers must be an array when provided");
+  }
+
+  if (totalScore !== undefined && totalScore !== null && typeof totalScore !== "number") {
+    throw new Error("totalScore must be a number when provided");
+  }
+
+  const alreadySubmittedToday = await getTodayDailyAssessment(userId);
+
+  if (alreadySubmittedToday) {
+    throw new Error("Daily assessment already submitted for today");
+  }
+
   const result = await pool.query(
-    `SELECT stress, challenge, mood
-     FROM users
-     WHERE id = $1`,
-    [userId]
+    `INSERT INTO daily_assessments (
+      user_id,
+      stress_level,
+      main_challenge,
+      overwhelm_frequency,
+      answers,
+      total_score,
+      risk_level,
+      assessment_date
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE)
+    RETURNING id, user_id, stress_level, main_challenge, overwhelm_frequency,
+              answers, total_score, risk_level, assessment_date, created_at`,
+    [
+      userId,
+      stressLevel,
+      mainChallenge,
+      overwhelmFrequency,
+      answers ? JSON.stringify(answers) : null,
+      totalScore ?? null,
+      riskLevel,
+    ]
   );
 
-  return result.rows[0];
+  const row = result.rows[0];
+
+  return {
+    id: row.id,
+    stressLevel: row.stress_level,
+    mainChallenge: row.main_challenge,
+    overwhelmFrequency: row.overwhelm_frequency,
+    answers: row.answers || null,
+    totalScore: row.total_score,
+    riskLevel: row.risk_level,
+    assessmentDate: row.assessment_date,
+    createdAt: row.created_at,
+  };
 };

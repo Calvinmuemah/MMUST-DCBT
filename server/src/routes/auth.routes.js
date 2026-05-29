@@ -8,6 +8,8 @@ import {
   updatePreferences,
   changePassword,
   logout,
+  dailyAssessmentStatus,
+  submitDailyAssessmentController,
 } from "../controllers/auth.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -27,5 +29,7 @@ router.post("/logout", protect, logout);
 
 // ONBOARDING (NEW)
 router.post("/onboarding", protect, onboarding);
+router.get("/daily-assessment/status", protect, dailyAssessmentStatus);
+router.post("/daily-assessment", protect, submitDailyAssessmentController);
 
 export default router;

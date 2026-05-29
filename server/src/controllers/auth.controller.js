@@ -7,6 +7,8 @@ import {
   updateAccountPreferences,
   changeUserPassword,
   revokeUserSessions,
+  getDailyAssessmentStatus,
+  submitDailyAssessment,
 } from "../services/auth.service.js";
 
 // =======================
@@ -154,6 +156,45 @@ export const logout = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       message: "Server error",
+    });
+  }
+};
+
+// =======================
+// DAILY ASSESSMENT STATUS
+// =======================
+export const dailyAssessmentStatus = async (req, res) => {
+  try {
+    const result = await getDailyAssessmentStatus(req.user.dbId);
+
+    res.json({
+      success: true,
+      ...result,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// =======================
+// DAILY ASSESSMENT SUBMIT
+// =======================
+export const submitDailyAssessmentController = async (req, res) => {
+  try {
+    const result = await submitDailyAssessment(req.user.dbId, req.body);
+
+    res.status(201).json({
+      success: true,
+      message: "Daily assessment saved successfully",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: err.message,
     });
   }
 };
