@@ -6,6 +6,11 @@ import {
   getJournalReports,
   listJournalEntries,
   updateJournalEntry,
+  createReflection as createReflectionEntry,
+  listReflections,
+  getReflection,
+  updateReflection,
+  deleteReflection,
 } from "../services/journal.service.js";
 
 export const createEntry = async (req, res) => {
@@ -146,5 +151,73 @@ export const getHistory = async (req, res) => {
     res.status(500).json({
       message: "Server error",
     });
+  }
+};
+
+export const createReflection = async (req, res) => {
+  try {
+    const result = await createReflectionEntry(req.user.dbId, req.body);
+
+    res.status(201).json({
+      message: "Reflection saved",
+      data: result,
+    });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+export const getReflections = async (req, res) => {
+  try {
+    const limit = Number.parseInt(req.query.limit, 10);
+    const offset = Number.parseInt(req.query.offset, 10);
+
+    const items = await listReflections(req.user.dbId, limit, offset);
+
+    res.json({ data: items });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getReflectionById = async (req, res) => {
+  try {
+    const item = await getReflection(req.user.dbId, req.params.reflectionId);
+
+    if (!item) {
+      return res.status(404).json({ message: "Reflection not found" });
+    }
+
+    res.json({ data: item });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const editReflection = async (req, res) => {
+  try {
+    const updated = await updateReflection(req.user.dbId, req.params.reflectionId, req.body);
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Reflection not found' });
+    }
+
+    res.json({ message: 'Reflection updated', data: updated });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+export const removeReflection = async (req, res) => {
+  try {
+    const deleted = await deleteReflection(req.user.dbId, req.params.reflectionId);
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Reflection not found' });
+    }
+
+    res.json({ message: 'Reflection deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
 };

@@ -702,3 +702,194 @@ export const getJournalDashboard = async (userId, filter = "weekly") => {
     chatHistory,
   };
 };
+
+// ----------------------
+// Reflections (thinking patterns)
+// ----------------------
+export const createReflection = async (userId, data) => {
+  const text = String(data?.text || "").trim();
+  const moodRating = data?.moodRating !== undefined ? Number(data.moodRating) : null;
+  const tags = Array.isArray(data?.tags) ? data.tags : [];
+  const sessionId = data?.sessionId ? String(data.sessionId) : null;
+
+  if (!text) {
+    throw new Error("Reflection text is required");
+  }
+
+  const inserted = await pool.query(
+    `INSERT INTO reflections (user_id, mood_rating, text, tags, session_id, updated_at)
+     VALUES ($1, $2, $3, $4::jsonb, $5, NOW())
+     RETURNING id, public_id, user_id, mood_rating, text, tags, session_id, created_at, updated_at`,
+    [userId, moodRating, text, JSON.stringify(tags), sessionId]
+  );
+
+  const row = inserted.rows[0];
+  const publicId = generatePublicId(`reflection:${row.id}:${userId}:${row.created_at}`);
+
+  await pool.query(`UPDATE reflections SET public_id = $1 WHERE id = $2`, [publicId, row.id]);
+
+  return {
+    id: publicId,
+    userId: row.user_id,
+    moodRating: row.mood_rating,
+    text: row.text,
+    tags: row.tags,
+    sessionId: row.session_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+};
+
+export const listReflections = async (userId, limit = 50, offset = 0) => {
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 200) : 50;
+  const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+
+  const result = await pool.query(
+    `SELECT id, public_id, mood_rating, text, tags, session_id, created_at, updated_at
+     FROM reflections
+     WHERE user_id = $1
+     ORDER BY created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [userId, safeLimit, safeOffset]
+  );
+
+  return result.rows.map((r) => ({
+    id: r.public_id || r.id,
+    moodRating: r.mood_rating,
+    text: r.text,
+    tags: r.tags,
+    sessionId: r.session_id,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }));
+};
+
+export const getReflection = async (userId, idOrPublicId) => {
+  const identifier = typeof idOrPublicId === 'string' && idOrPublicId.includes('-') ? idOrPublicId : null;
+
+  if (identifier) {
+    const res = await pool.query(
+      `SELECT id, public_id, mood_rating, text, tags, session_id, created_at, updated_at
+       FROM reflections
+       WHERE public_id = $1
+       AND user_id = $2
+       LIMIT 1`,
+      [identifier, userId]
+    );
+
+    const row = res.rows[0];
+    if (!row) return null;
+
+    return {
+      id: row.public_id || row.id,
+      moodRating: row.mood_rating,
+      text: row.text,
+      tags: row.tags,
+      sessionId: row.session_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  }
+
+  const numeric = Number(idOrPublicId);
+  if (!Number.isInteger(numeric)) return null;
+
+  const res2 = await pool.query(
+    `SELECT id, public_id, mood_rating, text, tags, session_id, created_at, updated_at
+     FROM reflections
+     WHERE id = $1
+     AND user_id = $2
+     LIMIT 1`,
+    [numeric, userId]
+  );
+
+  const row2 = res2.rows[0];
+  if (!row2) return null;
+
+  return {
+    id: row2.public_id || row2.id,
+    moodRating: row2.mood_rating,
+    text: row2.text,
+    tags: row2.tags,
+    sessionId: row2.session_id,
+    createdAt: row2.created_at,
+    updatedAt: row2.updated_at,
+  };
+};
+
+export const updateReflection = async (userId, idOrPublicId, data) => {
+  const resolved = typeof idOrPublicId === 'string' && idOrPublicId.includes('-') ? idOrPublicId : null;
+  let row;
+  let numericId = null;
+
+  if (resolved) {
+    const found = await pool.query(
+      `SELECT id, text, mood_rating, tags FROM reflections WHERE public_id = $1 AND user_id = $2 LIMIT 1`,
+      [resolved, userId]
+    );
+
+    if (found.rowCount === 0) return null;
+    row = found.rows[0];
+  } else {
+    numericId = Number(idOrPublicId);
+    if (!Number.isInteger(numericId)) return null;
+
+    const found2 = await pool.query(
+      `SELECT id, text, mood_rating, tags FROM reflections WHERE id = $1 AND user_id = $2 LIMIT 1`,
+      [numericId, userId]
+    );
+
+    if (found2.rowCount === 0) return null;
+    row = found2.rows[0];
+  }
+
+  const nextText = data?.text !== undefined ? String(data.text).trim() : row.text;
+  const nextMood = data?.moodRating !== undefined ? (data.moodRating === null ? null : Number(data.moodRating)) : row.mood_rating;
+  const nextTags = data?.tags !== undefined ? (Array.isArray(data.tags) ? data.tags : []) : row.tags;
+
+  if (!nextText || !String(nextText).trim()) {
+    throw new Error('Reflection text is required');
+  }
+
+  const result = await pool.query(
+    `UPDATE reflections SET text = $1, mood_rating = $2, tags = $3::jsonb, updated_at = NOW()
+     WHERE id = $4 AND user_id = $5
+     RETURNING id, public_id, text, mood_rating, tags, session_id, created_at, updated_at`,
+    [nextText, nextMood, JSON.stringify(nextTags), row.id || numericId, userId]
+  );
+
+  const updated = result.rows[0];
+
+  return {
+    id: updated.public_id || updated.id,
+    text: updated.text,
+    moodRating: updated.mood_rating,
+    tags: updated.tags,
+    sessionId: updated.session_id,
+    createdAt: updated.created_at,
+    updatedAt: updated.updated_at,
+  };
+};
+
+export const deleteReflection = async (userId, idOrPublicId) => {
+  const resolved = typeof idOrPublicId === 'string' && idOrPublicId.includes('-') ? idOrPublicId : null;
+
+  if (resolved) {
+    const result = await pool.query(
+      `DELETE FROM reflections WHERE public_id = $1 AND user_id = $2`,
+      [resolved, userId]
+    );
+
+    return result.rowCount > 0;
+  }
+
+  const numeric = Number(idOrPublicId);
+  if (!Number.isInteger(numeric)) return false;
+
+  const res = await pool.query(
+    `DELETE FROM reflections WHERE id = $1 AND user_id = $2`,
+    [numeric, userId]
+  );
+
+  return res.rowCount > 0;
+};
