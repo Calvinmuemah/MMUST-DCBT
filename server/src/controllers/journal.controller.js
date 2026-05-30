@@ -171,8 +171,10 @@ export const getReflections = async (req, res) => {
   try {
     const limit = Number.parseInt(req.query.limit, 10);
     const offset = Number.parseInt(req.query.offset, 10);
+    const tag = req.query.tag ? String(req.query.tag) : undefined;
+    const sessionId = req.query.sessionId ? String(req.query.sessionId) : undefined;
 
-    const items = await listReflections(req.user.dbId, limit, offset);
+    const items = await listReflections(req.user.dbId, limit, offset, { tag, sessionId });
 
     res.json({ data: items });
   } catch (err) {

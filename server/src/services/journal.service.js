@@ -740,17 +740,43 @@ export const createReflection = async (userId, data) => {
   };
 };
 
-export const listReflections = async (userId, limit = 50, offset = 0) => {
+export const listReflections = async (
+  userId,
+  limit = 50,
+  offset = 0,
+  options = {}
+) => {
   const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 200) : 50;
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+
+  const tag = options?.tag ? String(options.tag).trim() : null;
+  const sessionId = options?.sessionId ? String(options.sessionId).trim() : null;
+
+  const conditions = ['user_id = $1'];
+  const values = [userId];
+
+  if (tag) {
+    values.push(JSON.stringify([tag]));
+    conditions.push(`tags @> $${values.length}::jsonb`);
+  }
+
+  if (sessionId) {
+    values.push(sessionId);
+    conditions.push(`session_id = $${values.length}`);
+  }
+
+  values.push(safeLimit);
+  const limitParam = values.length;
+  values.push(safeOffset);
+  const offsetParam = values.length;
 
   const result = await pool.query(
     `SELECT id, public_id, mood_rating, text, tags, session_id, created_at, updated_at
      FROM reflections
-     WHERE user_id = $1
+     WHERE ${conditions.join(' AND ')}
      ORDER BY created_at DESC
-     LIMIT $2 OFFSET $3`,
-    [userId, safeLimit, safeOffset]
+     LIMIT $${limitParam} OFFSET $${offsetParam}`,
+    values
   );
 
   return result.rows.map((r) => ({
