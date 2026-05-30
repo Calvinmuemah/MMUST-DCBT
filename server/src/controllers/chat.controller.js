@@ -1,6 +1,7 @@
 import {
   generateResponse,
-  generateSessionStarter
+  generateSessionStarter,
+  getUserDisplayName
 } from "../services/chatbot.service.js";
 
 import { detectCrisis } from "../services/crisis.service.js";
@@ -48,7 +49,7 @@ export const startSession = async (req, res) => {
     );
 
     // generate CBT starter (NO INTRO)
-    const starter = await generateSessionStarter(topic);
+    const starter = await generateSessionStarter(topic, userId);
 
     // save starter message
     await pool.query(
@@ -96,10 +97,12 @@ export const chat = async (req, res) => {
     // ======================================
 
     if (detectCrisis(message)) {
+      const name = await getUserDisplayName(userId);
+
       return res.json({
         emergency: true,
-        response:
-          "I hear that things feel really heavy right now. You don’t have to go through this alone. Can you tell me what’s making it feel this way?",
+        recommendedAction: "crisis",
+        response: `${name ? `${name}, ` : ""}I’m really concerned about your safety. Please open Crisis Help or Therapist Support in the app right now. If you cannot stay safe, call emergency services or a trusted person near you. Are you in immediate danger?`,
         language: "english",
         sessionId
       });
@@ -148,7 +151,9 @@ export const chat = async (req, res) => {
     const aiResult = await generateResponse(
       message,
       topic,
-      resolvedId
+      resolvedId,
+      "english",
+      userId
     );
 
     const reply = aiResult.reply;

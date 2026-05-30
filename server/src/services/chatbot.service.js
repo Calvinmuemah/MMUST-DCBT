@@ -5,6 +5,24 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+const getUserDisplayName = async (userId) => {
+  try {
+    const result = await pool.query(
+      `SELECT name FROM users WHERE id = $1 LIMIT 1`,
+      [userId]
+    );
+
+    const name = result.rows[0]?.name?.toString().trim();
+    if (!name) {
+      return null;
+    }
+
+    return name.split(/\s+/)[0];
+  } catch (_) {
+    return null;
+  }
+};
+
 
 // ===============================
 // LANGUAGE CONTROL
@@ -53,10 +71,11 @@ You are a CBT mental health support assistant for university students.
 
 🎯 RESPONSE STYLE:
 - Be warm, human, and supportive
-- Maximum 45 words
-- 2–4 short sentences max
+- Keep replies short: 25–40 words when possible
+- 1–3 short sentences max
 - Validate feelings first
-- Give ONE CBT reflection
+- Give ONE CBT reflection or ONE gentle reframe
+- If helpful, suggest ONE simple exercise and guide the user through it step by step
 - Ask EXACTLY ONE question
 - No lists unless asked
 - No lectures
@@ -115,12 +134,15 @@ const formatMemory = (messages) => {
 // SESSION STARTER (NO INTRO)
 // ===============================
 
-export const generateSessionStarter = async (topic) => {
+export const generateSessionStarter = async (topic, userId = null) => {
   try {
+    const userName = userId ? await getUserDisplayName(userId) : null;
     const prompt = `
 ${getCBTRules()}
 
 Topic focus: ${getTopicFocus(topic)}
+
+${userName ? `User name: ${userName}` : "User name unavailable"}
 
 Generate ONLY the first therapist message.
 
@@ -129,8 +151,9 @@ Rules:
 - DO NOT say greetings like "Hi I'm..."
 - Start directly with emotional engagement
 - Be natural like a therapist already in session
+- Use the user's first name naturally if it fits
 - Ask ONE gentle question
-- Max 35 words
+- Max 30 words
 `;
 
     const result = await ai.models.generateContent({
@@ -158,9 +181,11 @@ export const generateResponse = async (
   message,
   topic = "general",
   sessionId = null,
-  language = "english"
+  language = "english",
+  userId = null
 ) => {
   try {
+    const userName = userId ? await getUserDisplayName(userId) : null;
     let memory = "";
 
     if (sessionId) {
@@ -175,6 +200,8 @@ ${getTopicFocus(topic)}
 
 ${getLanguagePrompt(language)}
 
+${userName ? `User name: ${userName}` : "User name unavailable"}
+
 Conversation Memory:
 ${memory || "No previous conversation"}
 
@@ -183,8 +210,11 @@ User Message:
 
 IMPORTANT BEHAVIOR:
 - Stay strictly in CBT emotional support mode
-- If message is unrelated (tech, jokes, random topics), redirect to feelings:
-  Example: "I hear you, but let's focus on how that made you feel"
+- If message is unrelated (tech, jokes, random topics), gently redirect to feelings
+- Keep the tone conversational, like a real therapist in a session
+- When appropriate, offer one small exercise, guidance, or coping step
+- If the user seems overwhelmed, gently encourage grounding or a brief exercise
+- If the user seems unsafe, do not continue the exercise; focus on safety and direct support
 - Do NOT leave therapy context
 - Continue naturally
 `;
@@ -213,3 +243,5 @@ IMPORTANT BEHAVIOR:
     };
   }
 };
+
+export { getUserDisplayName };
