@@ -134,13 +134,15 @@ const formatMemory = (messages) => {
 // SESSION STARTER (NO INTRO)
 // ===============================
 
-export const generateSessionStarter = async (topic, userId = null) => {
+export const generateSessionStarter = async (topic, userId = null, language = "english") => {
   try {
     const userName = userId ? await getUserDisplayName(userId) : null;
     const prompt = `
 ${getCBTRules()}
 
 Topic focus: ${getTopicFocus(topic)}
+
+${getLanguagePrompt(language)}
 
 ${userName ? `User name: ${userName}` : "User name unavailable"}
 

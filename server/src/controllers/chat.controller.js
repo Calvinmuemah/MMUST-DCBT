@@ -21,7 +21,7 @@ import {
 export const startSession = async (req, res) => {
   try {
     const userId = req.user.dbId;
-    const { topic } = req.body;
+    const { topic, language = "english" } = req.body;
 
     if (!topic) {
       return res.status(400).json({
@@ -49,7 +49,7 @@ export const startSession = async (req, res) => {
     );
 
     // generate CBT starter (NO INTRO)
-    const starter = await generateSessionStarter(topic, userId);
+    const starter = await generateSessionStarter(topic, userId, language);
 
     // save starter message
     await pool.query(
@@ -64,7 +64,7 @@ export const startSession = async (req, res) => {
       sessionId: publicId || created.id,
       message: starter,
       topic,
-      language: "english"
+      language
     });
 
   } catch (error) {
@@ -83,7 +83,7 @@ export const startSession = async (req, res) => {
 
 export const chat = async (req, res) => {
   try {
-    const { message, sessionId } = req.body;
+    const { message, sessionId, language: reqLanguage } = req.body;
     const userId = req.user.dbId;
 
     if (!message || !sessionId) {
@@ -152,7 +152,7 @@ export const chat = async (req, res) => {
       message,
       topic,
       resolvedId,
-      "english",
+      reqLanguage || "english",
       userId
     );
 
@@ -179,7 +179,7 @@ export const chat = async (req, res) => {
       emergency: false,
       response: reply,
       language,
-      sessionId: resolvedId   // ✅ FIXED (was wrong before)
+      sessionId: resolvedId
     });
 
   } catch (error) {

@@ -10,15 +10,24 @@ import {
   logout,
   dailyAssessmentStatus,
   submitDailyAssessmentController,
+  forgotPassword,
+  verifyOtpController,
+  resetPasswordController,
 } from "../controllers/auth.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
+import { loginLimiter, otpLimiter, passwordResetLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // AUTH
 router.post("/register", register);
-router.post("/login", login);
+router.post("/login", loginLimiter, login);
+
+// PASSWORD RESET / OTP
+router.post("/forgot-password", otpLimiter, forgotPassword);
+router.post("/verify-otp", verifyOtpController);
+router.post("/reset-password", passwordResetLimiter, resetPasswordController);
 
 // PROFILE
 router.get("/profile", protect, getProfile);

@@ -512,3 +512,103 @@ export const submitDailyAssessment = async (userId, data) => {
     createdAt: row.created_at,
   };
 };
+// =======================
+// PASSWORD RESET / OTP
+// =======================
+
+const ensureOtpTable = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_otps (
+      id BIGSERIAL PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      otp VARCHAR(6) NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      verified BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+};
+
+export const requestPasswordReset = async (email) => {
+  await ensureOtpTable();
+  
+  const user = await getUserByEmail(email);
+  if (!user) {
+    // We don't want to reveal if a user exists or not for security
+    return { message: "If an account exists with this email, an OTP has been sent." };
+  }
+
+  // Generate 6 digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+  // Delete any existing OTPs for this email
+  await pool.query(`DELETE FROM user_otps WHERE email = $1`, [email]);
+
+  await pool.query(
+    `INSERT INTO user_otps (email, otp, expires_at) VALUES ($1, $2, $3)`,
+    [email, otp, expiresAt]
+  );
+
+  // In a real app, send email here. For now, log to console.
+  console.log(`[AUTH] Password reset OTP for ${email}: ${otp}`);
+
+  return { message: "If an account exists with this email, an OTP has been sent." };
+};
+
+export const verifyOTP = async (email, otp) => {
+  await ensureOtpTable();
+
+  const result = await pool.query(
+    `SELECT * FROM user_otps WHERE email = $1 AND otp = $2 AND expires_at > NOW() AND verified = FALSE`,
+    [email, otp]
+  );
+
+  if (result.rowCount === 0) {
+    throw new Error("Invalid or expired OTP");
+  }
+
+  await pool.query(
+    `UPDATE user_otps SET verified = TRUE WHERE id = $1`,
+    [result.rows[0].id]
+  );
+
+  return { message: "OTP verified successfully. you can now reset your password." };
+};
+
+export const resetPasswordWithOTP = async (email, otp, newPassword) => {
+  await ensureOtpTable();
+
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
+
+  const result = await pool.query(
+    `SELECT * FROM user_otps WHERE email = $1 AND otp = $2 AND verified = TRUE AND expires_at > NOW()`,
+    [email, otp]
+  );
+
+  if (result.rowCount === 0) {
+    throw new Error("OTP not verified or expired. Please start over.");
+  }
+
+  const user = await getUserByEmail(email);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await pool.query(
+    `UPDATE users 
+     SET password = $1, 
+         token_version = COALESCE(token_version, 0) + 1 
+     WHERE id = $2`,
+    [hashedPassword, user.id]
+  );
+
+  // Clean up used OTP
+  await pool.query(`DELETE FROM user_otps WHERE email = $1`, [email]);
+
+  return { message: "Password reset successful. You can now login with your new password." };
+};

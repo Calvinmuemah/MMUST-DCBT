@@ -13,6 +13,9 @@ dotenv.config();
 
 const app = express();
 
+// rate limiting proxy trust (for Vercel/Render/Heroku)
+app.set("trust proxy", 1);
+
 // middleware
 // setup request logging (skip in tests)
 if (process.env.NODE_ENV !== "test") {

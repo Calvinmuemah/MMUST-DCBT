@@ -9,6 +9,9 @@ import {
   revokeUserSessions,
   getDailyAssessmentStatus,
   submitDailyAssessment,
+  requestPasswordReset,
+  verifyOTP,
+  resetPasswordWithOTP,
 } from "../services/auth.service.js";
 
 // =======================
@@ -196,5 +199,47 @@ export const submitDailyAssessmentController = async (req, res) => {
       success: false,
       message: err.message,
     });
+  }
+};
+
+// =======================
+// PASSWORD RESET / OTP
+// =======================
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+    
+    const result = await requestPasswordReset(email);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+export const verifyOtpController = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
+
+    const result = await verifyOTP(email, otp);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+export const resetPasswordController = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "Email, OTP, and new password are required" });
+    }
+
+    const result = await resetPasswordWithOTP(email, otp, newPassword);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
