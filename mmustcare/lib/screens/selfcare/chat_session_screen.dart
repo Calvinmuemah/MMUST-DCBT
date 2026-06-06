@@ -5,6 +5,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../core/services/api_error_utils.dart';
+import '../crisis/crisis_screen.dart';
+import '../therapist/therapist_screen.dart';
 import 'chat_service.dart';
 
 class ChatSessionScreen extends StatefulWidget {
@@ -41,6 +43,7 @@ class _ChatSessionScreenState extends State<ChatSessionScreen>
   bool aiSpeaking = false;
   Timer? _voiceSilenceTimer;
   late final AnimationController _voicePulseController;
+  bool emergencySupportVisible = false;
 
   /// MODE CONTROL
   /// mic = speech->text only
@@ -287,10 +290,12 @@ class _ChatSessionScreenState extends State<ChatSessionScreen>
 
       final reply = res["response"] ?? "I'm here with you.";
       final language = res["language"] ?? "english";
+      final isEmergency = res["emergency"] == true;
 
       setState(() {
         aiTyping = false;
         sending = false;
+        emergencySupportVisible = isEmergency;
 
         messages.add({
           "sender": "ai",
@@ -332,6 +337,7 @@ class _ChatSessionScreenState extends State<ChatSessionScreen>
       setState(() {
         aiTyping = false;
         sending = false;
+        emergencySupportVisible = false;
 
         messages.add({
           "sender": "ai",
@@ -521,6 +527,88 @@ class _ChatSessionScreenState extends State<ChatSessionScreen>
       ),
     );
   }
+  
+  Widget _emergencySupportBanner() {
+    if (!emergencySupportVisible) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.red.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Immediate support',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Use the support contacts below if you need urgent help right now.',
+            style: TextStyle(color: Colors.black87),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CrisisScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Open Crisis Help'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
+                    elevation: 0,
+                    side: const BorderSide(color: Colors.black12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const TherapistScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Therapist Contacts'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -547,6 +635,8 @@ class _ChatSessionScreenState extends State<ChatSessionScreen>
           if (aiTyping) typingIndicator(),
 
           _voiceListeningBanner(),
+
+          _emergencySupportBanner(),
 
           Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
