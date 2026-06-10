@@ -40,11 +40,55 @@ class AuthService {
     }
   }
 
+  Future<Map<String,dynamic>> loginAnonymously({String? name}) async {
+
+    try {
+
+      final response =
+          await http.post(
+
+        Uri.parse(
+          "${ApiConstants.baseUrl}/auth/anonymous",
+        ),
+
+        headers: {
+          "Content-Type":"application/json"
+        },
+
+        body: jsonEncode({
+          if (name != null) "name": name,
+        }),
+
+      );
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (data['token'] != null || data['user'] != null) {
+        await _saveAuthData(data);
+      }
+
+      return data;
+
+    } catch(e){
+
+      return {
+        "success":false,
+        "message":friendlyApiErrorMessage(
+          e,
+          fallback: 'Unable to start guest session. Check your connection.',
+        )
+      };
+
+    }
+
+  }
+
   Future<Map<String,dynamic>> register({
 
     required String name,
     required String email,
     required String password,
+    String? referralCode,
 
   }) async {
 
@@ -66,6 +110,7 @@ class AuthService {
           "name":name,
           "email":email,
           "password":password,
+          "referralCode": referralCode,
 
         }),
       );

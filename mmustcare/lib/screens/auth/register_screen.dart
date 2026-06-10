@@ -28,6 +28,9 @@ class _RegisterScreenState
   final TextEditingController confirmPasswordController =
       TextEditingController();
 
+  final TextEditingController referralController =
+      TextEditingController();
+
   final AuthService authService =
       AuthService();
 
@@ -47,6 +50,8 @@ class _RegisterScreenState
     passwordController.dispose();
 
     confirmPasswordController.dispose();
+
+    referralController.dispose();
 
     super.dispose();
 
@@ -126,6 +131,9 @@ class _RegisterScreenState
     final confirmPassword =
     confirmPasswordController.text.trim();
 
+    final referralCode =
+    referralController.text.trim();
+
     // =====================
     // VALIDATION
     // =====================
@@ -187,6 +195,8 @@ class _RegisterScreenState
         email: email,
 
         password: password,
+
+        referralCode: referralCode.isEmpty ? null : referralCode,
 
       );
 
@@ -560,6 +570,29 @@ class _RegisterScreenState
                                     ),
 
                                   ),
+
+                                ),
+
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              // =====================
+                              // REFERRAL CODE
+                              // =====================
+
+                              TextField(
+
+                                controller:
+                                referralController,
+
+                                decoration:
+                                inputDecoration(
+
+                                  hint: "Referral Code (Optional)",
+
+                                  icon:
+                                  Icons.card_giftcard,
 
                                 ),
 

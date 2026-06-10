@@ -2,9 +2,95 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
+import '../../core/services/auth_service.dart';
+import '../assessment/assessment_screen.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final AuthService _authService = AuthService();
+  bool _loading = false;
+
+  Future<void> _handleAnonymousLogin() async {
+    final nameController = TextEditingController();
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("What should we call you?"),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: "Enter your name",
+            filled: true,
+            fillColor: Colors.grey.shade100,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, nameController.text.trim()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text("Continue", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (name == null || name.isEmpty) return;
+
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      final result = await _authService.loginAnonymously(name: name);
+      
+      if (!mounted) return;
+
+      if (result['token'] != null || result['user'] != null) {
+        // Success - Navigate to assessment
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AssessmentScreen(),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Failed to join anonymously')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,72 +148,74 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
 
                 /// ================= MAIN INFO =================
                 Expanded(
-                  child: Column(
-                    children: [
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
 
-                      /// ICON SECTION (CENTER PIECE)
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.psychology_alt,
-                          size: 70,
-                          color: AppColors.primary,
-                        ),
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      const Text(
-                        "Digital CBT Support for Students",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      const Text(
-                        "Manage stress, anxiety, academic pressure, and emotional wellbeing through guided CBT tools and AI support.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          height: 1.5,
-                          color: Colors.grey,
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      /// ================= FEATURES =================
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: const [
-                          _FeatureItem(
-                            icon: Icons.smart_toy,
-                            label: "AI Support",
+                        /// ICON SECTION (CENTER PIECE)
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.08),
+                            shape: BoxShape.circle,
                           ),
-                          _FeatureItem(
-                            icon: Icons.insights,
-                            label: "Mood Tracking",
+                          child: const Icon(
+                            Icons.psychology_alt,
+                            size: 70,
+                            color: AppColors.primary,
                           ),
-                          _FeatureItem(
-                            icon: Icons.self_improvement,
-                            label: "CBT Tools",
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        const Text(
+                          "Digital CBT Support for Students",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        const Text(
+                          "Manage stress, anxiety, academic pressure, and emotional wellbeing through guided CBT tools and AI support.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 15,
+                            height: 1.5,
+                            color: Colors.grey,
+                          ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        /// ================= FEATURES =================
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: const [
+                            _FeatureItem(
+                              icon: Icons.smart_toy,
+                              label: "AI Support",
+                            ),
+                            _FeatureItem(
+                              icon: Icons.insights,
+                              label: "Mood Tracking",
+                            ),
+                            _FeatureItem(
+                              icon: Icons.self_improvement,
+                              label: "CBT Tools",
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -139,7 +227,7 @@ class OnboardingScreen extends StatelessWidget {
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: _loading ? null : () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -167,8 +255,38 @@ class OnboardingScreen extends StatelessWidget {
 
                     const SizedBox(height: 12),
 
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: OutlinedButton(
+                        onPressed: _loading ? null : _handleAnonymousLogin,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.primary, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: _loading 
+                          ? const SizedBox(
+                              width: 20, 
+                              height: 20, 
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)
+                            )
+                          : const Text(
+                              "Join Anonymously",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
                     TextButton(
-                      onPressed: () {
+                      onPressed: _loading ? null : () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(

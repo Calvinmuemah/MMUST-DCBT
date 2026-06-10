@@ -1,5 +1,6 @@
 import {
   registerUser,
+  registerAnonymousUser,
   loginUser,
   getUserProfile,
   completeOnboarding,
@@ -23,6 +24,24 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       message: "User registered successfully",
+      ...result,
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: err.message,
+    });
+  }
+};
+
+// =======================
+// REGISTER ANONYMOUS
+// =======================
+export const registerAnonymous = async (req, res) => {
+  try {
+    const result = await registerAnonymousUser(req.body);
+
+    res.status(201).json({
+      message: "Guest session started",
       ...result,
     });
   } catch (err) {

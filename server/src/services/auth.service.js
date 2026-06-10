@@ -2,13 +2,14 @@ import bcrypt from "bcrypt";
 import { pool } from "../config/db.js";
 import { generateToken } from "../utils/jwt.js";
 import { ensureUserPublicId, generatePublicId } from "../utils/ids.js";
-import { ensureReferralCode } from "./referral.service.js";
+import { applyReferralCode, ensureReferralCode } from "./referral.service.js";
 
 const selectUserFields = `
   id, public_id, name, email, password,
   notifications_enabled, email_updates, token_version,
   referral_code, referred_by_user_id, referral_reward_points, referral_invites_count,
-  onboarding_answers, onboarding_total_score, onboarding_risk_level, onboarding_completed, onboarding_completed_at
+  onboarding_answers, onboarding_total_score, onboarding_risk_level, onboarding_completed, onboarding_completed_at,
+  is_anonymous
 `;
 
 const toUserResponse = (user) => ({
@@ -26,6 +27,7 @@ const toUserResponse = (user) => ({
   onboardingRiskLevel: user.onboarding_risk_level || null,
   onboardingCompleted: Boolean(user.onboarding_completed),
   onboardingCompletedAt: user.onboarding_completed_at || null,
+  isAnonymous: Boolean(user.is_anonymous),
 });
 
 const getUserById = async (userId) => {
@@ -101,7 +103,7 @@ const recordLoginEvent = async (userId) => {
 // REGISTER (AUTH ONLY)
 // =======================
 export const registerUser = async (data) => {
-  const { name, email, password } = data;
+  const { name, email, password, referralCode: incomingReferralCode } = data;
 
   const userExists = await getUserByEmail(email);
 
@@ -121,12 +123,59 @@ export const registerUser = async (data) => {
   const publicId = await ensureUserPublicId(created.id, created.email);
   const referralCode = await ensureReferralCode(created.id, created.email);
 
+  // Apply referral code if provided
+  if (incomingReferralCode) {
+    try {
+      await applyReferralCode(created.id, incomingReferralCode);
+    } catch (err) {
+      console.error("Failed to apply referral code during registration:", err.message);
+      // We don't throw here to avoid failing the whole registration
+      // just because of an invalid/expired referral code
+    }
+  }
+
   const freshUser = await getUserById(created.id);
 
   const token = generateToken({
     id: created.id,
     uid: publicId,
     email: created.email,
+    tokenVersion: freshUser?.token_version || created.token_version || 0,
+  });
+
+  return {
+    user: toUserResponse({
+      ...freshUser,
+      public_id: publicId,
+      referral_code: referralCode,
+    }),
+    token,
+  };
+};
+
+// =======================
+// REGISTER ANONYMOUS
+// =======================
+export const registerAnonymousUser = async (data) => {
+  const name = data?.name || `Guest ${Math.floor(1000 + Math.random() * 9000)}`;
+  
+  const newUser = await pool.query(
+    `INSERT INTO users (name, is_anonymous)
+     VALUES ($1, TRUE)
+     RETURNING ${selectUserFields}`,
+    [name]
+  );
+  
+  const created = newUser.rows[0];
+  const publicId = await ensureUserPublicId(created.id, `anon-${created.id}`);
+  const referralCode = await ensureReferralCode(created.id, `anon-${created.id}`);
+
+  const freshUser = await getUserById(created.id);
+
+  const token = generateToken({
+    id: created.id,
+    uid: publicId,
+    email: null,
     tokenVersion: freshUser?.token_version || created.token_version || 0,
   });
 

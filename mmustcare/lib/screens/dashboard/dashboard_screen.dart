@@ -8,6 +8,9 @@ import '../selfcare/selfcare_screen.dart';
 import '../crisis/crisis_screen.dart';
 import '../more/more_screen.dart';
 
+import '../selfcare/chat_service.dart';
+import '../selfcare/chat_session_screen.dart';
+
 // JOURNEY PAGES
 import 'journal_screen.dart';
 import 'day_planner_screen.dart';
@@ -25,48 +28,38 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState
     extends State<DashboardScreen> {
+int currentIndex = 0;
 
-  int currentIndex = 0;
+String userName = "Student";
+String? token;
 
-  String userName = "Student";
+@override
+void initState() {
 
-  @override
-  void initState() {
+  super.initState();
 
-    super.initState();
+  loadUserData();
 
-    loadUserData();
+}
 
-  }
+// =====================================
+// LOAD USER DATA
+// =====================================
 
-  // =====================================
-  // LOAD USER DATA
-  // =====================================
+Future<void> loadUserData() async {
 
-  Future<void> loadUserData() async {
+  final prefs =
+  await SharedPreferences.getInstance();
 
-    final prefs =
-    await SharedPreferences.getInstance();
+  setState(() {
 
-    final savedName =
-    prefs.getString("name");
+    userName =
+        prefs.getString("name") ?? "Student";
+    token = prefs.getString("token");
 
-    if (!mounted) return;
+  });
 
-    setState(() {
-
-      userName =
-
-      savedName != null &&
-          savedName.isNotEmpty
-
-          ? savedName
-
-          : "Student";
-
-    });
-
-  }
+}
 
   // =====================================
   // GREETING
@@ -140,6 +133,57 @@ class _DashboardScreenState
       const MoreScreen(),
     );
 
+  }
+
+  // =====================================
+  // AI CHAT
+  // =====================================
+
+  Future<void> startAIChat() async {
+    if (token == null || token!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please login again to start a chat.")),
+      );
+      return;
+    }
+
+    try {
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final res = await ChatService.startSession("general", token!);
+
+      if (!mounted) return;
+      Navigator.pop(context); // hide loading
+
+      final sessionId = res["sessionId"];
+      final firstMessage = res["message"] ?? "Hello 👋";
+
+      if (sessionId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatSessionScreen(
+              sessionId: sessionId.toString(),
+              token: token!,
+              initialMessage: firstMessage,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // hide loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 
   // =====================================
@@ -444,17 +488,10 @@ class _DashboardScreenState
 
                 ElevatedButton(
 
-                  onPressed: () {
+                 onPressed: startAIChat,
 
-                    setState(() {
-                      currentIndex = 2;
-                    });
-
-                  },
-
-                  style:
-                  ElevatedButton.styleFrom(
-
+                 style:
+                 ElevatedButton.styleFrom(
                     backgroundColor:
                     Colors.white,
 

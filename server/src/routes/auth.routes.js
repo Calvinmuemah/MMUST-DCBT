@@ -1,6 +1,7 @@
 import express from "express";
 import {
   register,
+  registerAnonymous,
   login,
   getProfile,
   onboarding,
@@ -22,6 +23,7 @@ const router = express.Router();
 
 // AUTH
 router.post("/register", register);
+router.post("/anonymous", registerAnonymous);
 router.post("/login", loginLimiter, login);
 
 // PASSWORD RESET / OTP

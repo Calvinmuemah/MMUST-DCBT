@@ -355,6 +355,32 @@ class CrisisScreen extends StatelessWidget {
           },
         ],
       },
+      {
+        'title': 'Kakamega General Hospital',
+        'subtitle': 'County referral hospital and emergency services',
+        'description':
+            'Provides comprehensive medical care and emergency services for the Kakamega community.',
+        'action': 'View Contact',
+        'color': Colors.teal,
+        'icon': Icons.local_hospital,
+        'contacts': [
+          {
+            'label': 'Phone number',
+            'value': '0110975071',
+            'icon': 'phone',
+          },
+          {
+            'label': 'Hospital support',
+            'value': 'General medical and emergency support desk',
+            'icon': 'phone',
+          },
+          {
+            'label': 'Support type',
+            'value': 'Emergency, medical, and specialist care',
+            'icon': 'info',
+          },
+        ],
+      },
     ];
 
     return Scaffold(
