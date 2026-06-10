@@ -9,7 +9,7 @@ const selectUserFields = `
   notifications_enabled, email_updates, token_version,
   referral_code, referred_by_user_id, referral_reward_points, referral_invites_count,
   onboarding_answers, onboarding_total_score, onboarding_risk_level, onboarding_completed, onboarding_completed_at,
-  is_anonymous
+  is_anonymous, role
 `;
 
 const toUserResponse = (user) => ({
@@ -28,6 +28,7 @@ const toUserResponse = (user) => ({
   onboardingCompleted: Boolean(user.onboarding_completed),
   onboardingCompletedAt: user.onboarding_completed_at || null,
   isAnonymous: Boolean(user.is_anonymous),
+  role: user.role || 'student',
 });
 
 const getUserById = async (userId) => {
@@ -103,7 +104,7 @@ const recordLoginEvent = async (userId) => {
 // REGISTER (AUTH ONLY)
 // =======================
 export const registerUser = async (data) => {
-  const { name, email, password, referralCode: incomingReferralCode } = data;
+  const { name, email, password, referralCode: incomingReferralCode, role = 'student' } = data;
 
   const userExists = await getUserByEmail(email);
 
@@ -114,10 +115,10 @@ export const registerUser = async (data) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const newUser = await pool.query(
-    `INSERT INTO users (name, email, password)
-     VALUES ($1, $2, $3)
+    `INSERT INTO users (name, email, password, role)
+     VALUES ($1, $2, $3, $4)
      RETURNING ${selectUserFields}`,
-    [name, email, hashedPassword]
+    [name, email, hashedPassword, role]
   );
   const created = newUser.rows[0];
   const publicId = await ensureUserPublicId(created.id, created.email);
@@ -140,6 +141,7 @@ export const registerUser = async (data) => {
     id: created.id,
     uid: publicId,
     email: created.email,
+    role: freshUser?.role || created.role || role,
     tokenVersion: freshUser?.token_version || created.token_version || 0,
   });
 
@@ -176,6 +178,7 @@ export const registerAnonymousUser = async (data) => {
     id: created.id,
     uid: publicId,
     email: null,
+    role: 'student',
     tokenVersion: freshUser?.token_version || created.token_version || 0,
   });
 
@@ -215,6 +218,7 @@ export const loginUser = async (data) => {
     id: user.id,
     uid: publicId,
     email: user.email,
+    role: user.role,
     tokenVersion: user.token_version || 0,
   });
 
