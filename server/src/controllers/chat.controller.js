@@ -192,6 +192,7 @@ export const chat = async (req, res) => {
 
   } catch (error) {
     console.log("CHAT ERROR:", error);
+    await createLog('error', 'analytics', `Chat error: ${error.message}`, { path: '/chat' });
 
     return res.status(500).json({
       message: "Server error"
@@ -243,6 +244,7 @@ export const getSessionMessages = async (req, res) => {
 
   } catch (error) {
     console.log("GET HISTORY ERROR:", error);
+    await createLog('error', 'analytics', `Get chat history error: ${error.message}`, { path: '/chat/:sessionId' });
 
     return res.status(500).json({
       message: "Error fetching history"
