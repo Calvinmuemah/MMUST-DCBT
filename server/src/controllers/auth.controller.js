@@ -14,6 +14,7 @@ import {
   verifyOTP,
   resetPasswordWithOTP,
 } from "../services/auth.service.js";
+import { createLog } from "../services/admin.service.js";
 
 // =======================
 // REGISTER
@@ -98,6 +99,8 @@ export const onboarding = async (req, res) => {
     }
 
     const result = await completeOnboarding(req.user.dbId, req.body);
+
+    await createLog('success', 'analytics', 'Onboarding completed', { userId: req.user.dbId, riskLevel: req.body.riskLevel });
 
     res.json({
       success: true,
@@ -207,6 +210,8 @@ export const dailyAssessmentStatus = async (req, res) => {
 export const submitDailyAssessmentController = async (req, res) => {
   try {
     const result = await submitDailyAssessment(req.user.dbId, req.body);
+
+    await createLog('info', 'analytics', 'Daily assessment submitted', { userId: req.user.dbId, score: req.body.totalScore });
 
     res.status(201).json({
       success: true,

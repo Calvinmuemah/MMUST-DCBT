@@ -3,6 +3,7 @@ import { pool } from "../config/db.js";
 import { generateToken } from "../utils/jwt.js";
 import { ensureUserPublicId, generatePublicId } from "../utils/ids.js";
 import { applyReferralCode, ensureReferralCode } from "./referral.service.js";
+import { createLog } from "./admin.service.js";
 
 const selectUserFields = `
   id, public_id, name, email, password,
@@ -137,6 +138,8 @@ export const registerUser = async (data) => {
 
   const freshUser = await getUserById(created.id);
 
+  await createLog('info', 'auth', `New user registered: ${email} (${role})`, { userId: created.id, role });
+
   const token = generateToken({
     id: created.id,
     uid: publicId,
@@ -173,6 +176,8 @@ export const registerAnonymousUser = async (data) => {
   const referralCode = await ensureReferralCode(created.id, `anon-${created.id}`);
 
   const freshUser = await getUserById(created.id);
+
+  await createLog('info', 'auth', `Guest session started: ${name}`, { userId: created.id });
 
   const token = generateToken({
     id: created.id,
@@ -223,6 +228,7 @@ export const loginUser = async (data) => {
   });
 
   await recordLoginEvent(user.id);
+  await createLog('info', 'auth', `User logged in: ${user.email || 'Anonymous'}`, { userId: user.id, role: user.role });
 
   return {
     user: toUserResponse({

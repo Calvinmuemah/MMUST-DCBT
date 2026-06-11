@@ -2,7 +2,8 @@ import express from "express";
 import { 
   getDashboardMetrics, 
   getUsers, 
-  getCrisisReports 
+  getCrisisReports,
+  getLogs
 } from "../controllers/admin.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 
@@ -13,5 +14,6 @@ const router = express.Router();
 router.get("/metrics", protect, getDashboardMetrics);
 router.get("/users", protect, getUsers);
 router.get("/crisis", protect, getCrisisReports);
+router.get("/logs", protect, getLogs);
 
 export default router;

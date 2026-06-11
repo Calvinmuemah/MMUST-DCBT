@@ -5,12 +5,15 @@ export const getDashboardMetrics = async (req, res) => {
     const { range } = req.query;
     const stats = await adminService.getDashboardStats(range);
     
+    await adminService.createLog('info', 'analytics', 'Admin dashboard metrics viewed', { adminId: req.user.id, range });
+
     res.json({
       success: true,
       data: stats
     });
   } catch (err) {
     console.error("getDashboardMetrics error:", err.message);
+    await adminService.createLog('error', 'analytics', `Dashboard metrics error: ${err.message}`, { path: '/metrics' });
     res.status(500).json({
       success: false,
       message: "Server error while fetching metrics"
@@ -23,6 +26,7 @@ export const getUsers = async (req, res) => {
     const users = await adminService.getDetailedUsers();
     res.json({ success: true, data: users });
   } catch (err) {
+    await adminService.createLog('error', 'system', `Get users error: ${err.message}`, { path: '/users' });
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -32,6 +36,18 @@ export const getCrisisReports = async (req, res) => {
     const reports = await adminService.getCrisisReports();
     res.json({ success: true, data: reports });
   } catch (err) {
+    await adminService.createLog('error', 'analytics', `Get crisis reports error: ${err.message}`, { path: '/crisis' });
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const getLogs = async (req, res) => {
+  try {
+    const { category, limit } = req.query;
+    const logs = await adminService.getSystemLogs(category, limit);
+    res.json({ success: true, data: logs });
+  } catch (err) {
+    await adminService.createLog('error', 'system', `Get logs error: ${err.message}`, { path: '/logs' });
     res.status(500).json({ success: false, message: err.message });
   }
 };

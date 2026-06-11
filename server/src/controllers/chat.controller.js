@@ -5,6 +5,7 @@ import {
 } from "../services/chatbot.service.js";
 
 import { detectCrisis } from "../services/crisis.service.js";
+import { createLog } from "../services/admin.service.js";
 
 import { pool } from "../config/db.js";
 
@@ -60,6 +61,8 @@ export const startSession = async (req, res) => {
       [created.id, starter]
     );
 
+    await createLog('info', 'analytics', `Chat session started: ${topic}`, { userId, topic, sessionId: created.id });
+
     return res.json({
       sessionId: publicId || created.id,
       message: starter,
@@ -69,6 +72,7 @@ export const startSession = async (req, res) => {
 
   } catch (error) {
     console.log("START SESSION ERROR:", error);
+    await createLog('error', 'analytics', `Start chat session error: ${error.message}`, { path: '/chat/session/start' });
 
     return res.status(500).json({
       message: "Server error"
@@ -98,6 +102,8 @@ export const chat = async (req, res) => {
 
     if (detectCrisis(message)) {
       const name = await getUserDisplayName(userId);
+
+      await createLog('warn', 'analytics', 'Crisis detected in chat', { userId, message });
 
       return res.json({
         emergency: true,
@@ -170,6 +176,8 @@ export const chat = async (req, res) => {
       `,
       [resolvedId, reply]
     );
+
+    await createLog('info', 'analytics', 'Chat message sent', { userId, sessionId: resolvedId });
 
     // ======================================
     // RESPONSE

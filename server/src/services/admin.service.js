@@ -120,3 +120,30 @@ export const getCrisisReports = async () => {
   `);
   return result.rows;
 };
+
+export const getSystemLogs = async (category = 'all', limit = 100) => {
+  let query = `SELECT * FROM system_logs`;
+  const params = [];
+  
+  if (category !== 'all') {
+    query += ` WHERE category = $1`;
+    params.push(category);
+  }
+  
+  query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
+  params.push(limit);
+  
+  const result = await pool.query(query, params);
+  return result.rows;
+};
+
+export const createLog = async (level, category, message, metadata = {}) => {
+  try {
+    await pool.query(
+      `INSERT INTO system_logs (level, category, message, metadata) VALUES ($1, $2, $3, $4)`,
+      [level, category, message, JSON.stringify(metadata)]
+    );
+  } catch (err) {
+    console.error("createLog error:", err.message);
+  }
+};
