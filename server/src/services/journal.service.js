@@ -286,6 +286,22 @@ const buildTimeline = async (userId, filter) => {
            WHERE user_id = $1
            AND created_at >= NOW() - INTERVAL '${sqlInterval}'
            GROUP BY created_at::date
+
+           UNION ALL
+
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM reflections
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
+
+           UNION ALL
+
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM daily_assessments
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
          ) activity
          GROUP BY DATE(bucket_date)
          ORDER BY day ASC`,
@@ -322,6 +338,22 @@ const buildTimeline = async (userId, filter) => {
 
            SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
            FROM journal_entries
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
+
+           UNION ALL
+
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM reflections
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
+
+           UNION ALL
+
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM daily_assessments
            WHERE user_id = $1
            AND created_at >= NOW() - INTERVAL '${sqlInterval}'
            GROUP BY created_at::date
@@ -364,6 +396,22 @@ const buildTimeline = async (userId, filter) => {
            WHERE user_id = $1
            AND created_at >= NOW() - INTERVAL '${sqlInterval}'
            GROUP BY created_at::date
+
+           UNION ALL
+
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM reflections
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
+
+           UNION ALL
+
+           SELECT created_at::date AS bucket_date, COUNT(*)::int AS count
+           FROM daily_assessments
+           WHERE user_id = $1
+           AND created_at >= NOW() - INTERVAL '${sqlInterval}'
+           GROUP BY created_at::date
          ) activity
          GROUP BY DATE_TRUNC('month', bucket_date)::date
          ORDER BY bucket ASC`,
@@ -388,6 +436,8 @@ const getAttendanceSummary = async (userId) => {
   let loginCount = { rows: [{ total: 0 }] };
   let chatCount = { rows: [{ total: 0 }] };
   let journalCount = { rows: [{ total: 0 }] };
+  let reflectionsCount = { rows: [{ total: 0 }] };
+  let assessmentsCount = { rows: [{ total: 0 }] };
   let activeDays = { rows: [{ total: 0 }] };
 
   try {
@@ -431,6 +481,32 @@ const getAttendanceSummary = async (userId) => {
   }
 
   try {
+    reflectionsCount = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM reflections
+       WHERE user_id = $1`,
+      [userId]
+    );
+  } catch (error) {
+    if (!isMissingJournalTableError(error)) {
+      throw error;
+    }
+  }
+
+  try {
+    assessmentsCount = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM daily_assessments
+       WHERE user_id = $1`,
+      [userId]
+    );
+  } catch (error) {
+    if (!isMissingJournalTableError(error)) {
+      throw error;
+    }
+  }
+
+  try {
     activeDays = await pool.query(
       `SELECT COUNT(DISTINCT day)::int AS total
        FROM (
@@ -442,6 +518,10 @@ const getAttendanceSummary = async (userId) => {
          WHERE cs.user_id = $1
          UNION
          SELECT created_at::date AS day FROM journal_entries WHERE user_id = $1
+         UNION
+         SELECT created_at::date AS day FROM reflections WHERE user_id = $1
+         UNION
+         SELECT created_at::date AS day FROM daily_assessments WHERE user_id = $1
        ) activity_days`,
       [userId]
     );
@@ -455,6 +535,8 @@ const getAttendanceSummary = async (userId) => {
     loginCount: loginCount.rows[0]?.total || 0,
     chatCount: chatCount.rows[0]?.total || 0,
     journalCount: journalCount.rows[0]?.total || 0,
+    reflectionsCount: reflectionsCount.rows[0]?.total || 0,
+    assessmentsCount: assessmentsCount.rows[0]?.total || 0,
     activeDays: activeDays.rows[0]?.total || 0,
   };
 };
@@ -666,7 +748,11 @@ export const getJournalReports = async (userId, filter = "weekly") => {
     totalEntries: totalsResult.rows[0]?.total || 0,
     attendance: {
       ...attendance,
-      totalActivity: attendance.loginCount + attendance.chatCount + attendance.journalCount,
+      totalActivity: attendance.loginCount + 
+                     attendance.chatCount + 
+                     attendance.journalCount + 
+                     attendance.reflectionsCount + 
+                     attendance.assessmentsCount,
     },
     moodBreakdown: moodResult.rows.map((row) => ({
       mood: row.mood,

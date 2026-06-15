@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import nodemailer from "nodemailer";
 import { pool } from "../config/db.js";
 import { generateToken } from "../utils/jwt.js";
 import { ensureUserPublicId, generatePublicId } from "../utils/ids.js";
@@ -177,6 +178,7 @@ export const registerAnonymousUser = async (data) => {
 
   const freshUser = await getUserById(created.id);
 
+  await recordLoginEvent(created.id);
   await createLog('info', 'auth', `Guest session started: ${name}`, { userId: created.id });
 
   const token = generateToken({
@@ -572,6 +574,47 @@ export const submitDailyAssessment = async (userId, data) => {
   };
 };
 // =======================
+// EMAIL HELPER
+// =======================
+
+const sendOTPEmail = async (email, otp) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"MMUSTCare" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your Password Reset OTP",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; borderRadius: 10px;">
+          <h2 style="color: #2563EB; text-align: center;">MMUSTCare Password Reset</h2>
+          <p>Hello,</p>
+          <p>You have requested to reset your password. Please use the following One-Time Password (OTP) to proceed. This code is valid for 15 minutes.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1E293B; background: #f3f4f6; padding: 10px 20px; border-radius: 8px;">${otp}</span>
+          </div>
+          <p>If you did not request this, please ignore this email or contact support if you have concerns.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #64748B; text-align: center;">MMUSTCare - Student Mental Health & Well-being Platform</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    return false;
+  }
+};
+
+// =======================
 // PASSWORD RESET / OTP
 // =======================
 
@@ -609,8 +652,12 @@ export const requestPasswordReset = async (email) => {
     [email, otp, expiresAt]
   );
 
-  // In a real app, send email here. For now, log to console.
-  console.log(`[AUTH] Password reset OTP for ${email}: ${otp}`);
+  // Send the actual email
+  const emailSent = await sendOTPEmail(email, otp);
+
+  if (!emailSent) {
+    console.log(`[AUTH] Failed to send email to ${email}. Logging OTP to console: ${otp}`);
+  }
 
   return { message: "If an account exists with this email, an OTP has been sent." };
 };
