@@ -113,7 +113,7 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
 
   Future<void> _createTask() async {
     final titleController = TextEditingController();
-    final timeController = TextEditingController();
+    TimeOfDay? selectedTime;
 
     final created = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
@@ -129,7 +129,7 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
             ),
             child: StatefulBuilder(builder: (context, modalSetState) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -144,35 +144,98 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 25),
                     const Text(
-                      'Add Task',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      'Schedule New Task',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'What would you like to achieve today?',
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    const SizedBox(height: 25),
                     TextField(
                       controller: titleController,
+                      autofocus: true,
                       decoration: InputDecoration(
-                        hintText: 'Task name',
+                        hintText: 'e.g. Study Session, Exercise',
+                        labelText: 'Task Name',
                         filled: true,
                         fillColor: Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                        prefixIcon: const Icon(Icons.edit_note_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Set Time',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: timeController,
-                      decoration: InputDecoration(
-                        hintText: 'Time (e.g., 8:00 AM)',
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: AppColors.primary,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          modalSetState(() => selectedTime = picked);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: selectedTime != null ? AppColors.primary : Colors.grey.shade200,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              color: selectedTime != null ? AppColors.primary : Colors.grey,
+                            ),
+                            const SizedBox(width: 14),
+                            Text(
+                              selectedTime != null ? selectedTime!.format(context) : 'Select reminder time',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: selectedTime != null ? Colors.black : Colors.grey,
+                                fontWeight: selectedTime != null ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (selectedTime != null)
+                              const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 30),
                     SizedBox(
                       width: double.infinity,
-                      height: 52,
+                      height: 56,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -182,21 +245,23 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
                         ),
                         onPressed: () {
                           final title = titleController.text.trim();
-                          final time = timeController.text.trim().isEmpty ? 'Today' : timeController.text.trim();
-
                           if (title.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a task name')));
+                            return;
+                          }
+                          if (selectedTime == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a time')));
                             return;
                           }
 
                           Navigator.pop(context, {
                             'id': DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
                             'name': title,
-                            'time': time,
+                            'time': selectedTime!.format(context),
                             'done': false,
                           });
                         },
-                        child: const Text('Add Task', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                        child: const Text('Add to Schedule', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                       ),
                     ),
                   ],
@@ -209,7 +274,6 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
     );
 
     titleController.dispose();
-    timeController.dispose();
 
     if (created == null || !mounted) return;
 
@@ -233,13 +297,14 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
     if (!scheduled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Task saved. Add a valid time like 2:00 PM to get reminders.'),
+          content: Text('Task saved without reminder.'),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Task "${created['name']}" scheduled.'),
+          content: Text('Reminder set for 10 minutes before ${created['time']}.'),
+          backgroundColor: AppColors.primary,
         ),
       );
     }

@@ -89,6 +89,60 @@ export const getDashboardStats = async (range = '7d') => {
   `);
   stats.topChallenges = challengeResult.rows;
 
+  // 6. System Health (Table Counts)
+  const healthResult = await pool.query(`
+    SELECT 
+      (SELECT COUNT(*) FROM users) as users_count,
+      (SELECT COUNT(*) FROM chat_sessions) as chats_count,
+      (SELECT COUNT(*) FROM chat_messages) as messages_count,
+      (SELECT COUNT(*) FROM journal_entries) as journals_count,
+      (SELECT COUNT(*) FROM reflections) as reflections_count,
+      (SELECT COUNT(*) FROM daily_assessments) as assessments_count,
+      (SELECT COUNT(*) FROM user_login_events) as logins_count
+  `);
+  stats.systemHealth = healthResult.rows[0];
+
+  // 7. Activity Heatmap (By Hour)
+  const heatmapResult = await pool.query(`
+    SELECT 
+      EXTRACT(HOUR FROM created_at) as hour,
+      COUNT(*) as count
+    FROM user_login_events
+    WHERE created_at >= NOW() - INTERVAL '${interval}'
+    GROUP BY hour
+    ORDER BY hour ASC
+  `);
+  stats.activityHeatmap = heatmapResult.rows;
+
+  // 8. Streak Statistics
+  const streakStats = await pool.query(`
+    WITH user_streaks AS (
+      SELECT DISTINCT user_id, created_at::date as day FROM user_login_events
+    )
+    SELECT 
+      MAX(streak_length) as max_streak,
+      ROUND(AVG(streak_length), 1) as avg_streak
+    FROM (
+      SELECT user_id, COUNT(*) as streak_length
+      FROM user_streaks
+      GROUP BY user_id
+    ) streaks
+  `);
+  stats.streaks = streakStats.rows[0];
+
+  // 9. Referral Conversion
+  const referralStats = await pool.query(`
+    SELECT 
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE referred_by_user_id IS NOT NULL) as referred
+    FROM users
+  `);
+  stats.referrals = {
+    total: referralStats.rows[0].total,
+    referred: referralStats.rows[0].referred,
+    percentage: Math.round((referralStats.rows[0].referred / (referralStats.rows[0].total || 1)) * 100)
+  };
+
   return stats;
 };
 
@@ -135,6 +189,11 @@ export const getSystemLogs = async (category = 'all', limit = 100) => {
   
   const result = await pool.query(query, params);
   return result.rows;
+};
+
+export const deleteUser = async (userId) => {
+  const result = await pool.query(`DELETE FROM users WHERE id = $1 OR public_id::text = $1`, [userId]);
+  return result.rowCount > 0;
 };
 
 export const createLog = async (level, category, message, metadata = {}) => {

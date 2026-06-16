@@ -54,6 +54,36 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
       }
       return;
     }
+
+    // Update Favorites & Recent logic
+    try {
+      // 1. Update Favorites (Most Used)
+      final statsJson = prefs.getString('topic_usage_stats') ?? '{}';
+      Map<String, dynamic> stats = jsonDecode(statsJson);
+      stats[topic] = (stats[topic] ?? 0) + 1;
+      await prefs.setString('topic_usage_stats', jsonEncode(stats));
+
+      List<String> favs = stats.keys.toList();
+      favs.sort((a, b) => (stats[b] as int).compareTo(stats[a] as int));
+      await prefs.setStringList('favorite_topics', favs.take(3).toList());
+
+      // 2. Update Recent (Last Visited Unique)
+      final chatsJson = prefs.getString('recent_chats') ?? '[]';
+      List<dynamic> chats = jsonDecode(chatsJson);
+      
+      // Remove if already exists to move it to top
+      chats.removeWhere((c) => c['topic'] == topic);
+      
+      chats.insert(0, {
+        'topic': topic,
+        'date': DateTime.now().toString().split(' ')[0], // Simple YYYY-MM-DD
+      });
+      
+      await prefs.setString('recent_chats', jsonEncode(chats.take(3).toList()));
+    } catch (e) {
+      debugPrint("Error updating topic stats: $e");
+    }
+
     try {
       final res = await ChatService.startSession(topic, token);
       final sessionId = res["sessionId"];

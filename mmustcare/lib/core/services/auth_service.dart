@@ -24,6 +24,7 @@ class AuthService {
         final name = user['name'];
         final email = user['email'];
         final id = user['_id'] ?? user['id'];
+        final onboardingCompleted = user['onboardingCompleted'] == true;
 
         if (name != null) {
           await prefs.setString('name', name.toString());
@@ -36,6 +37,9 @@ class AuthService {
         if (id != null) {
           await prefs.setString('userId', id.toString());
         }
+        
+        // Ensure onboarding status is explicitly tracked
+        await prefs.setBool('onboarding_completed', onboardingCompleted);
       }
     }
   }

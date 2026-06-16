@@ -30,9 +30,11 @@ Future<void> main() async {
   if (token != null && userJson != null) {
     try {
       final user = jsonDecode(userJson);
-      final onboardingCompleted = user['onboardingCompleted'] ?? false;
+      final bool onboardingCompleted = prefs.getBool('onboarding_completed') ?? 
+                                     user['onboardingCompleted'] == true;
       
       if (onboardingCompleted) {
+        // Only check daily status if onboarding is done
         final bool dailyRequired = user['dailyAssessmentRequired'] == true;
         if (dailyRequired) {
           home = DailyAssessmentsScreen();

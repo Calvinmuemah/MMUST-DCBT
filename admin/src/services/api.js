@@ -71,6 +71,11 @@ export const getLogs = async (category = 'all') => {
   return response.data.data;
 };
 
+export const deleteUser = async (id) => {
+  const response = await api.delete(`/admin/users/${id}`);
+  return response.data;
+};
+
 export const logout = () => {
   localStorage.removeItem('admin_token');
   localStorage.removeItem('admin_user');

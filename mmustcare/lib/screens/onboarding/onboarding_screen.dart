@@ -7,6 +7,7 @@ import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import '../../core/services/auth_service.dart';
 import '../assessment/assessment_screen.dart';
+import '../assessment/daily_assessments_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -31,17 +32,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (user['isAnonymous'] == true) {
           if (!mounted) return;
           
-          // Check if onboarding was already done
-          final bool onboardingCompleted = user['onboardingCompleted'] ?? false;
+          final bool onboardingCompleted = prefs.getBool('onboarding_completed') ?? 
+                                         user['onboardingCompleted'] == true;
+          final bool dailyRequired = user['dailyAssessmentRequired'] == true;
           
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => onboardingCompleted 
-                  ? DashboardScreen() 
-                  : AssessmentScreen(),
-            ),
-          );
+          if (!onboardingCompleted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => AssessmentScreen()),
+            );
+          } else if (dailyRequired) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => DailyAssessmentsScreen()),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => DashboardScreen()),
+            );
+          }
           return;
         }
       } catch (e) {
@@ -62,14 +72,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (!mounted) return;
 
       if (result['token'] != null || result['user'] != null) {
-        // Ensure local user data correctly flags anonymous and daily status
         try {
           final p = await SharedPreferences.getInstance();
           final uJson = p.getString('user');
           if (uJson != null) {
             final u = jsonDecode(uJson);
             u['isAnonymous'] = true;
-            u['dailyAssessmentRequired'] = false; // Fresh login shouldn't require immediate daily check
+            u['dailyAssessmentRequired'] = false;
             await p.setString('user', jsonEncode(u));
           }
         } catch (_) {}
@@ -77,7 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => const AssessmentScreen(),
+            builder: (_) => AssessmentScreen(),
           ),
         );
       } else {
@@ -230,256 +239,219 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-      /// 🔥 KEY FIX: allows background to extend behind status bar
       extendBodyBehindAppBar: true,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 60),
 
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.white,
-
-        child: SafeArea(
-          top: true,
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-
-                const SizedBox(height: 40),
-
-                /// ================= HEADER TEXT =================
-                const Text(
-                  "Welcome to",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
-                  ),
+              /// ================= HEADER =================
+              const Text(
+                "Welcome to",
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
                 ),
-
-                const SizedBox(height: 8),
-
-                const Text(
-                  "MMUSTCare",
-                  style: TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                "MMUSTCare",
+                style: TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                  letterSpacing: -1,
                 ),
-
-                const SizedBox(height: 12),
-
-                const Text(
-                  "Your Mental Wellbeing Companion",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    height: 1.4,
-                  ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "A safe space for your mental health. We're here to support your journey towards emotional balance and academic success.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
                 ),
+              ),
 
-                const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-                /// ================= MAIN INFO =================
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-
-                        /// ICON SECTION (CENTER PIECE)
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 20,
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            'assets/logo/app_icon.png',
-                            height: 100,
-                            width: 100,
-                          ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        const Text(
-                          "Digital CBT Support for Students",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        const Text(
-                          "Manage stress, anxiety, academic pressure, and emotional wellbeing through guided CBT tools and AI support.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.5,
-                            color: Colors.grey,
-                          ),
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        /// ================= FEATURES =================
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: const [
-                            _FeatureItem(
-                              icon: Icons.smart_toy,
-                              label: "AI Support",
-                            ),
-                            _FeatureItem(
-                              icon: Icons.insights,
-                              label: "Mood Tracking",
-                            ),
-                            _FeatureItem(
-                              icon: Icons.self_improvement,
-                              label: "CBT Tools",
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                /// ================= CTA BUTTONS =================
-                Column(
-                  children: [
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _loading ? null : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          "Get Started",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+              /// ================= CONTENT =================
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      _buildWelcomeSection(
+                        icon: Icons.favorite_rounded,
+                        title: "Compassionate Support",
+                        description: "Get immediate help with stress, anxiety, and academic pressure through guided CBT tools.",
+                        color: Colors.pinkAccent.shade100,
                       ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: OutlinedButton(
-                        onPressed: _loading ? null : _handleAnonymousLogin,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary, width: 1.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: _loading 
-                          ? const SizedBox(
-                              width: 20, 
-                              height: 20, 
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)
-                            )
-                          : const Text(
-                              "Join Anonymously",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
+                      const SizedBox(height: 20),
+                      _buildWelcomeSection(
+                        icon: Icons.security_rounded,
+                        title: "Safe & Private",
+                        description: "Your privacy is our priority. Your data is encrypted and secure at every step of your journey.",
+                        color: Colors.blueAccent.shade100,
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      _buildWelcomeSection(
+                        icon: Icons.auto_awesome_rounded,
+                        title: "AI Companion",
+                        description: "Interact with our AI support to reflect on your thoughts and discover healthier ways of thinking.",
+                        color: Colors.purpleAccent.shade100,
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+              ),
 
-                    const SizedBox(height: 8),
-
-                    TextButton(
+              /// ================= ACTIONS =================
+              Column(
+                children: [
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 58,
+                    child: ElevatedButton(
                       onPressed: _loading ? null : () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginScreen(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
                         );
                       },
-                      child: const Text(
-                        "Already have an account? Login",
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
+                      child: const Text(
+                        "Get Started",
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                      ),
                     ),
-
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 58,
+                    child: OutlinedButton(
+                      onPressed: _loading ? null : _handleAnonymousLogin,
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _loading 
+                        ? const SizedBox(
+                            width: 20, 
+                            height: 20, 
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)
+                          )
+                        : const Text(
+                            "Continue as Guest",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: _loading ? null : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      );
+                    },
+                    child: RichText(
+                      text: const TextSpan(
+                        text: "Already have an account? ",
+                        style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                        children: [
+                          TextSpan(
+                            text: "Login",
+                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-}
 
-/// ================= FEATURE ITEM =================
-class _FeatureItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _FeatureItem({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 26, color: AppColors.primary),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-            fontWeight: FontWeight.w500,
+  Widget _buildWelcomeSection({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color.withOpacity(0.8), size: 28),
           ),
-        )
-      ],
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                    height: 1.4,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

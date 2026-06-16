@@ -256,7 +256,7 @@ class CrisisScreen extends StatelessWidget {
         'subtitle': 'Campus security and emergency response (24/7)',
         'description':
             'Campus security responds to urgent safety incidents, escorts, and emergency situations on campus.',
-        'action': 'Call 911',
+        'action': 'View Contact',
         'color': Colors.red,
         'icon': Icons.security,
         'contacts': [
@@ -534,7 +534,7 @@ class CrisisScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatTile(
-                    title: "2",
+                    title: "4",
                     subtitle: "University contacts",
                     color: AppColors.primary,
                   ),

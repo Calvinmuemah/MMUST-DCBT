@@ -15,5 +15,6 @@ router.get("/metrics", protect, getDashboardMetrics);
 router.get("/users", protect, getUsers);
 router.get("/crisis", protect, getCrisisReports);
 router.get("/logs", protect, getLogs);
+router.delete("/users/:id", protect, deleteUser);
 
 export default router;

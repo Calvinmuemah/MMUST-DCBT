@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import UsersPage from './pages/Users';
 import CrisisPage from './pages/Crisis';
+import SystemInsights from './pages/SystemInsights';
 import LogsPage from './pages/Logs';
 import SettingsPage from './pages/Settings';
 import Sidebar from './components/Sidebar';
@@ -42,6 +43,8 @@ function App() {
         return <UsersPage />;
       case '/crisis':
         return <CrisisPage />;
+      case '/insights':
+        return <SystemInsights />;
       case '/logs':
         return <LogsPage />;
       case '/settings':

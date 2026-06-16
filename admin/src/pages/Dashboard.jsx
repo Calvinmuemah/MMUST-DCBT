@@ -8,7 +8,8 @@ import {
   UserCheck,
   UserMinus,
   Calendar,
-  ChevronDown
+  ChevronDown,
+  Zap
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -20,9 +21,7 @@ import {
   ResponsiveContainer, 
   LineChart, 
   Line,
-  Cell,
-  PieChart,
-  Pie
+  Cell
 } from 'recharts';
 import { getMetrics } from '../services/api';
 
@@ -78,15 +77,23 @@ const Dashboard = () => {
     );
   }
 
-  const { users, riskDistribution, chats, assessmentTrends, topChallenges } = metrics;
+  const { 
+    users = { total_users: 0, anonymous_users: 0, new_users: 0 }, 
+    riskDistribution = [], 
+    chats = { totalSessions: 0, topTopics: [] }, 
+    assessmentTrends = [], 
+    topChallenges = [], 
+    systemHealth = { messages_count: 0, chats_count: 0, journals_count: 0, reflections_count: 0, logins_count: 0 }, 
+    streaks = { max_streak: 0, avg_streak: 0 } 
+  } = metrics || {};
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+    <div className="p-8 max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header & Filter */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-text-dark text-slate-800">Analytics Overview</h1>
-          <p className="text-text-light mt-1">Viewing performance metrics for {timeRanges.find(r => r.id === range).label}</p>
+          <h1 className="text-2xl font-bold text-slate-800">Analytics Overview</h1>
+          <p className="text-slate-500 mt-1">Viewing performance metrics for {timeRanges.find(r => r.id === range).label}</p>
         </div>
 
         <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm self-start">
@@ -126,23 +133,64 @@ const Dashboard = () => {
           subtitle={`${Math.round((users.anonymous_users / (users.total_users || 1)) * 100)}% of Total`}
         />
         <MetricCard 
-          title="Chat Sessions" 
-          value={chats.totalSessions} 
-          icon={<MessageSquare className="text-accent" />}
-          subtitle="Started during this period"
+          title="Max System Streak" 
+          value={`${streaks.max_streak} Days`} 
+          icon={<Zap className="text-orange-500" />}
+          subtitle="Longest active user streak"
         />
         <MetricCard 
-          title="Assessments" 
-          value={assessmentTrends.reduce((acc, curr) => acc + parseInt(curr.total_assessments), 0)} 
-          icon={<Activity className="text-orange-500" />}
-          subtitle="Completed during this period"
+          title="Total Activity" 
+          value={systemHealth.logins_count} 
+          icon={<Activity className="text-accent" />}
+          subtitle="Total platform logins"
         />
+      </div>
+
+      {/* SYSTEM PERFORMANCE QUICK VIEW */}
+      <div className="bg-slate-900 rounded-3xl p-8 text-white overflow-hidden relative shadow-2xl shadow-slate-900/20">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+          <div>
+            <h3 className="text-xl font-bold mb-2">System Health Overview</h3>
+            <p className="text-slate-400 text-sm leading-relaxed max-w-sm">A real-time snapshot of the data-layer growth and user engagement across the platform.</p>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 flex-1">
+            <div className="text-center lg:text-left border-l border-white/10 pl-6">
+              <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Messages</div>
+              <div className="text-2xl font-bold">{parseInt(systemHealth.messages_count).toLocaleString()}</div>
+            </div>
+            <div className="text-center lg:text-left border-l border-white/10 pl-6">
+              <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">CBT Sessions</div>
+              <div className="text-2xl font-bold">{parseInt(systemHealth.chats_count).toLocaleString()}</div>
+            </div>
+            <div className="text-center lg:text-left border-l border-white/10 pl-6">
+              <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Journals</div>
+              <div className="text-2xl font-bold">{parseInt(systemHealth.journals_count).toLocaleString()}</div>
+            </div>
+            <div className="text-center lg:text-left border-l border-white/10 pl-6">
+              <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Reflections</div>
+              <div className="text-2xl font-bold">{parseInt(systemHealth.reflections_count).toLocaleString()}</div>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => {
+              window.history.pushState({}, '', '/insights');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
+            className="bg-white text-slate-900 hover:bg-slate-100 transition-all px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg whitespace-nowrap self-start lg:self-center"
+          >
+            View Full Insights
+          </button>
+        </div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 blur-[120px] -mr-40 -mt-40 rounded-full" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/20 blur-[120px] -ml-40 -mb-40 rounded-full" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Risk Distribution Chart */}
-        <div className="card">
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800">
             <AlertTriangle className="w-5 h-5 text-red-500" />
             Onboarding Risk Distribution
           </h3>
@@ -166,8 +214,8 @@ const Dashboard = () => {
         </div>
 
         {/* Stress Trend Chart */}
-        <div className="card">
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800">
             <TrendingUp className="w-5 h-5 text-secondary" />
             Average Stress Level Trend
           </h3>
@@ -196,8 +244,8 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Top Chat Topics */}
-        <div className="card lg:col-span-1">
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-1">
+          <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800">
             <MessageSquare className="w-5 h-5 text-accent" />
             Popular Chat Topics
           </h3>
@@ -209,19 +257,22 @@ const Dashboard = () => {
                   <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-accent rounded-full" 
-                      style={{ width: `${(topic.count / chats.topTopics[0].count) * 100}%` }}
+                      style={{ width: `${(topic.count / (chats.topTopics[0]?.count || 1)) * 100}%` }}
                     />
                   </div>
                   <span className="text-sm font-bold text-slate-700 w-8 text-right">{topic.count}</span>
                 </div>
               </div>
             ))}
+            {chats.topTopics.length === 0 && (
+              <div className="text-slate-400 text-sm italic text-center py-4">No chat data yet</div>
+            )}
           </div>
         </div>
 
         {/* Top Challenges */}
-        <div className="card lg:col-span-2">
-          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+          <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800">
             <Activity className="w-5 h-5 text-primary" />
             Top Reported Challenges
           </h3>
@@ -245,16 +296,16 @@ const Dashboard = () => {
 };
 
 const MetricCard = ({ title, value, icon, subtitle }) => (
-  <div className="card flex flex-col justify-between">
+  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
     <div className="flex items-center justify-between">
-      <span className="text-text-light font-medium">{title}</span>
+      <span className="text-slate-500 font-medium text-sm uppercase tracking-wider">{title}</span>
       <div className="p-2 bg-slate-50 rounded-lg">
         {icon}
       </div>
     </div>
     <div className="mt-4">
-      <div className="text-3xl font-bold tracking-tight text-text-dark">{value}</div>
-      <div className="text-sm text-text-light mt-1 font-medium">{subtitle}</div>
+      <div className="text-3xl font-bold tracking-tight text-slate-800">{value}</div>
+      <div className="text-xs text-slate-400 mt-1 font-medium">{subtitle}</div>
     </div>
   </div>
 );

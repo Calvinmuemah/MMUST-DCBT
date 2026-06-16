@@ -152,6 +152,10 @@ class _JournalScreenState extends State<JournalScreen> {
               : {};
           loading = false;
         });
+
+        // Trigger milestone celebration check
+        _checkMilestones((_attendance['currentStreak'] ?? 0) as int);
+
         return;
       }
 
@@ -412,13 +416,19 @@ class _JournalScreenState extends State<JournalScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Daily Reflection',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Daily Reflection',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                _streakBadge((attendance['currentStreak'] ?? 0) as int),
+                              ],
                             ),
                             const SizedBox(height: 10),
                             const Text(
@@ -1077,6 +1087,179 @@ class _JournalScreenState extends State<JournalScreen> {
             style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _streakBadge(int streak) {
+    Color fireColor = Colors.orangeAccent;
+    String milestoneMsg = "";
+
+    if (streak >= 200) {
+      fireColor = Colors.purpleAccent;
+      milestoneMsg = " 🔥 Legendary!";
+    } else if (streak >= 100) {
+      fireColor = Colors.yellowAccent;
+      milestoneMsg = " 🏆 Elite!";
+    } else if (streak >= 30) {
+      fireColor = Colors.cyanAccent;
+      milestoneMsg = " ⭐ Steady!";
+    } else if (streak >= 7) {
+      fireColor = Colors.deepOrangeAccent;
+      milestoneMsg = " 👍 Habit!";
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: streak >= 7 ? fireColor.withOpacity(0.5) : Colors.white.withOpacity(0.2),
+          width: streak >= 30 ? 1.5 : 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.local_fire_department,
+            color: fireColor,
+            size: 18,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$streak day streak$milestoneMsg',
+            style: TextStyle(
+              color: streak >= 7 ? fireColor : Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =====================================
+  // STREAK MILESTONES
+  // =====================================
+
+  Future<void> _checkMilestones(int streak) async {
+    if (streak < 7) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final lastSeen = prefs.getInt('last_seen_milestone') ?? 0;
+
+    int? currentMilestone;
+    String title = "";
+    String message = "";
+    IconData icon = Icons.star;
+    Color color = Colors.orange;
+
+    if (streak >= 200 && lastSeen < 200) {
+      currentMilestone = 200;
+      title = "Mental Health Legend!";
+      message = "You've stayed consistent for 200 days. Your dedication to wellness is truly legendary!";
+      icon = Icons.local_fire_department;
+      color = Colors.purpleAccent;
+    } else if (streak >= 100 && lastSeen < 100) {
+      currentMilestone = 100;
+      title = "Wellness Elite!";
+      message = "100 days of mindfulness! You've built an elite habit of taking care of your mind.";
+      icon = Icons.emoji_events;
+      color = Colors.yellowAccent;
+    } else if (streak >= 30 && lastSeen < 30) {
+      currentMilestone = 30;
+      title = "Monthly Master!";
+      message = "30 days in a row! You've mastered the art of daily reflection.";
+      icon = Icons.verified;
+      color = Colors.cyanAccent;
+    } else if (streak >= 7 && lastSeen < 7) {
+      currentMilestone = 7;
+      title = "The Habit!";
+      message = "7 days straight! You've successfully built a wellness habit.";
+      icon = Icons.thumb_up;
+      color = Colors.deepOrangeAccent;
+    }
+
+    if (currentMilestone != null) {
+      await prefs.setInt('last_seen_milestone', currentMilestone);
+      if (!mounted) return;
+      _showCelebrationDialog(title, message, icon, color, streak);
+    }
+  }
+
+  void _showCelebrationDialog(String title, String message, IconData icon, Color color, int streak) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.elasticOut,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                contentPadding: const EdgeInsets.all(24),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: color, size: 60),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 15, height: 1.4),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        "$streak Days Strong",
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text("Keep it up!"),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

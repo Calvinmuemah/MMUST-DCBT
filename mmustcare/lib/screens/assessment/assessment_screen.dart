@@ -93,6 +93,8 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       // Update local storage to reflect onboarding completion
       try {
         final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('onboarding_completed', true);
+        
         final userJson = prefs.getString('user');
         if (userJson != null) {
           final user = jsonDecode(userJson);

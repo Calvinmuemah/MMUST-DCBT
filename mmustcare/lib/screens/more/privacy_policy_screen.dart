@@ -13,12 +13,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
           "Privacy Policy",
           style: TextStyle(
             color: Colors.black,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
           ),
         ),
       ),
@@ -30,53 +34,73 @@ class PrivacyPolicyScreen extends StatelessWidget {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
                       AppColors.primary.withOpacity(0.9),
                       AppColors.secondary.withOpacity(0.9),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(.12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.privacy_tip_outlined,
-                      color: Colors.white,
-                      size: 32,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(.15),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.privacy_tip_outlined,
+                        color: Colors.white,
+                        size: 32,
+                      ),
                     ),
-                    SizedBox(height: 10),
-                    Text(
+                    const SizedBox(height: 20),
+                    const Text(
                       "Your Privacy Matters",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
-                      "We are committed to protecting your personal data",
+                      "We are committed to protecting your personal data and maintaining your trust.",
                       style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
+                        color: Colors.white.withOpacity(.85),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.grey.shade100),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withOpacity(0.02),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     )
@@ -85,37 +109,43 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _Section(
-                      title: "1. Data Collection",
-                      text: "We only collect information necessary to improve your experience within MMUSTCare.",
+                    _PolicySection(
+                      title: "1. Information We Collect",
+                      text: "We only collect data that is essential for providing you with personalized CBT support. This includes your daily reflections, mood logs, and chat interactions within the app.",
                     ),
-                    _Section(
-                      title: "2. Data Security",
-                      text: "All personal data is stored securely and protected from unauthorized access.",
+                    _PolicySection(
+                      title: "2. How We Use Your Data",
+                      text: "Your data is used solely to enhance your experience, provide insights into your mental health trends, and improve the AI's ability to support your specific needs.",
                     ),
-                    _Section(
-                      title: "3. Data Sharing",
-                      text: "We do not sell or share your personal data with third parties.",
+                    _PolicySection(
+                      title: "3. Data Security",
+                      text: "We implement industry-standard encryption protocols to protect your information. Your private thoughts and logs are stored securely and are protected from unauthorized access.",
                     ),
-                    _Section(
-                      title: "4. Usage",
-                      text: "Your data is used only to enhance features like recommendations and mental health support.",
+                    _PolicySection(
+                      title: "4. No Third-Party Sharing",
+                      text: "We never sell, rent, or trade your personal information with third parties. Your data stays between you and your wellness companion.",
                     ),
-                    _Section(
-                      title: "5. User Control",
-                      text: "You can request deletion or modification of your data at any time.",
+                    _PolicySection(
+                      title: "5. Your Rights & Control",
+                      text: "You maintain full control over your data. You can export your journal or request the complete deletion of your account and all associated data at any time through the settings.",
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               const Center(
-                child: Text(
-                  "Last updated: 2026",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+                child: Column(
+                  children: [
+                    Text(
+                      "Last updated: June 2026",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 40),
+                  ],
                 ),
               ),
             ],
@@ -126,31 +156,33 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
-class _Section extends StatelessWidget {
+class _PolicySection extends StatelessWidget {
   final String title;
   final String text;
-  const _Section({required this.title, required this.text});
+  const _PolicySection({required this.title, required this.text});
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             text,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.grey,
-              height: 1.5,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+              height: 1.6,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

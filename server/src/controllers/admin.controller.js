@@ -51,3 +51,19 @@ export const getLogs = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await adminService.deleteUser(id);
+    
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    await adminService.createLog('warn', 'auth', `User deleted by admin`, { adminId: req.user.id, userId: id });
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
