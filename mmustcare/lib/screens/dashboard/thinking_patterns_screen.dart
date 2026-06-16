@@ -354,16 +354,12 @@ class _ThinkingPatternsScreenState
   Widget build(BuildContext context) {
 
     return Scaffold(
-
-      backgroundColor:
-      const Color(0xFFF7F8FA),
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
 
       appBar: AppBar(
-
-        backgroundColor: Colors.white,
-
+        backgroundColor: Colors.transparent,
         elevation: 0,
-
         centerTitle: true,
 
         iconTheme:

@@ -211,7 +211,7 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
     titleController.dispose();
     timeController.dispose();
 
-    if (created == null) return;
+    if (created == null || !mounted) return;
 
     created['id'] = _newTaskId();
 
@@ -229,10 +229,17 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
 
     if (!mounted) return;
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     if (!scheduled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Task saved. Add a valid time like 2:00 PM to get reminders.'),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Task "${created['name']}" scheduled.'),
         ),
       );
     }
@@ -299,10 +306,11 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
 
@@ -461,6 +469,7 @@ class _DayPlannerScreenState extends State<DayPlannerScreen> {
                         final name = (task['name'] ?? task['title'] ?? 'Untitled').toString();
 
                         return Container(
+                          key: ValueKey(task['id']),
                           margin:
                               const EdgeInsets.only(
                             bottom: 14,

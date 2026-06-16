@@ -384,11 +384,12 @@ class CrisisScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
 
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 40, 20, 24),
           children: [
 
             Container(

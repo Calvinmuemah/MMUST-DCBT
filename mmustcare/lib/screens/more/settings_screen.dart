@@ -1,20 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/auth_service.dart';
 import '../auth/login_screen.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() =>
-      _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState
-    extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   bool notifications = true;
   bool darkMode = false;
   bool emailUpdates = true;
@@ -156,26 +156,32 @@ class _SettingsScreenState
   }
 
   Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _name = prefs.getString('name') ?? '';
+      _email = prefs.getString('email') ?? '';
+    });
+
     final res = await _auth.getProfile();
     if (!mounted) return;
 
-    if (res['success'] == true && res['user'] != null) {
-      final user = res['user'] as Map<String, dynamic>;
-      setState(() {
-        _name = user['name']?.toString() ?? '';
-        _email = user['email']?.toString() ?? '';
-        notifications = user['notificationsEnabled'] == true;
-        emailUpdates = user['emailUpdates'] == true;
-      });
-    } else if (res['success'] == true) {
-      // some endpoints may return the user object directly
-      final user = res;
+    if (res['success'] == true) {
+      final Map<String, dynamic> user;
+      if (res['user'] != null) {
+        user = res['user'] as Map<String, dynamic>;
+      } else {
+        user = res;
+      }
+
       setState(() {
         _name = user['name']?.toString() ?? _name;
         _email = user['email']?.toString() ?? _email;
-        notifications = user['notificationsEnabled'] == true;
-        emailUpdates = user['emailUpdates'] == true;
+        notifications = user['notificationsEnabled'] ?? notifications;
+        emailUpdates = user['emailUpdates'] ?? emailUpdates;
       });
+
+      if (user['name'] != null) await prefs.setString('name', user['name'].toString());
+      if (user['email'] != null) await prefs.setString('email', user['email'].toString());
     }
   }
 
@@ -216,13 +222,12 @@ class _SettingsScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios,
@@ -232,9 +237,7 @@ class _SettingsScreenState
             Navigator.pop(context);
           },
         ),
-
         centerTitle: true,
-
         title: const Text(
           "Settings",
           style: TextStyle(
@@ -243,189 +246,149 @@ class _SettingsScreenState
           ),
         ),
       ),
-
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-
-            /// PROFILE CARD
-            Container(
-              padding:
-                  const EdgeInsets.all(18),
-
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius:
-                    BorderRadius.circular(
-                        24),
-
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withOpacity(.03),
-                    blurRadius: 12,
-                  )
-                ],
-              ),
-
-              child: Row(
-                children: [
-
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor:
-                        AppColors.primary
-                            .withOpacity(.15),
-                    child: Text(
-                      _name.isNotEmpty ? _name.substring(0, 1).toUpperCase() : 'S',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(
-                      width: 15),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
-                      children: [
-
-                        Text(
-                          _name.isNotEmpty ? _name : 'Student',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 17,
-                          ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(.03),
+                      blurRadius: 12,
+                    )
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: AppColors.primary.withOpacity(.15),
+                      child: Text(
+                        _name.isNotEmpty ? _name.substring(0, 1).toUpperCase() : 'S',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
                         ),
-
-                        SizedBox(height: 4),
-
-                        Text(
-                          _email.isNotEmpty ? _email : 'Manage your account preferences',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _name.isNotEmpty ? _name : 'Student',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                            ),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _email.isNotEmpty ? _email : 'Manage your account preferences',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _showEditProfile,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(.1),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  GestureDetector(
-                    onTap: _showEditProfile,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(.1),
-                        borderRadius: BorderRadius.circular(12),
+                        child: const Icon(
+                          Icons.edit,
+                          color: AppColors.primary,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.edit,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  )
-                ],
+                    )
+                  ],
+                ),
               ),
-            ),
-
-            const SizedBox(height: 30),
-
-            const Text(
-              "Preferences",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight:
-                    FontWeight.bold,
+              const SizedBox(height: 30),
+              const Text(
+                "Preferences",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 15),
-
-            _settingTile(
-              icon:
-                  Icons.notifications_outlined,
-              title: "Notifications",
-              subtitle:
-                  "Receive app notifications",
-              value: notifications,
-              onChanged: (value) {
-                _savePreferences(
-                  notificationsValue: value,
-                  emailUpdatesValue: emailUpdates,
-                );
-              },
-            ),
-
-            _settingTile(
-              icon: Icons.dark_mode,
-              title: "Dark Mode",
-              subtitle:
-                  "Enable dark appearance",
-              value: darkMode,
-              onChanged: (value) {
-                setState(() {
-                  darkMode = value;
-                });
-              },
-            ),
-
-            _settingTile(
-              icon: Icons.email_outlined,
-              title: "Email Updates",
-              subtitle:
-                  "Receive email updates",
-              value: emailUpdates,
-              onChanged: (value) {
-                _savePreferences(
-                  notificationsValue: notifications,
-                  emailUpdatesValue: value,
-                );
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            const Text(
-              "Account",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight:
-                    FontWeight.bold,
+              const SizedBox(height: 15),
+              _settingTile(
+                icon: Icons.notifications_outlined,
+                title: "Notifications",
+                subtitle: "Receive app notifications",
+                value: notifications,
+                onChanged: (value) {
+                  _savePreferences(
+                    notificationsValue: value,
+                    emailUpdatesValue: emailUpdates,
+                  );
+                },
               ),
-            ),
-
-            const SizedBox(height: 15),
-
-            _menuTile(
-              Icons.lock_outline,
-              "Change Password",
-              onTap: _showChangePassword,
-            ),
-
-            _menuTile(
-              Icons.person_outline,
-              "Edit Profile",
-              onTap: _showEditProfile,
-            ),
-
-            _menuTile(
-              Icons.logout,
-              "Logout",
-              isLogout: true,
-              onTap: _logout,
-            ),
-          ],
+              _settingTile(
+                icon: Icons.dark_mode,
+                title: "Dark Mode",
+                subtitle: "Enable dark appearance",
+                value: darkMode,
+                onChanged: (value) {
+                  setState(() {
+                    darkMode = value;
+                  });
+                },
+              ),
+              _settingTile(
+                icon: Icons.email_outlined,
+                title: "Email Updates",
+                subtitle: "Receive email updates",
+                value: emailUpdates,
+                onChanged: (value) {
+                  _savePreferences(
+                    notificationsValue: notifications,
+                    emailUpdatesValue: value,
+                  );
+                },
+              ),
+              const SizedBox(height: 30),
+              const Text(
+                "Account",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 15),
+              _menuTile(
+                Icons.lock_outline,
+                "Change Password",
+                onTap: _showChangePassword,
+              ),
+              _menuTile(
+                Icons.person_outline,
+                "Edit Profile",
+                onTap: _showEditProfile,
+              ),
+              _menuTile(
+                Icons.logout,
+                "Logout",
+                isLogout: true,
+                onTap: _logout,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -436,97 +399,58 @@ class _SettingsScreenState
     required String title,
     required String subtitle,
     required bool value,
-    required Function(bool)
-        onChanged,
+    required Function(bool) onChanged,
   }) {
     return Container(
-      margin:
-          const EdgeInsets.only(
-              bottom: 15),
-
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 10,
-      ),
-
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(
-                18),
-
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color:
-                Colors.black.withOpacity(
-                    .03),
+            color: Colors.black.withOpacity(.03),
             blurRadius: 10,
           )
         ],
       ),
-
       child: Row(
         children: [
-
           Container(
-            padding:
-                const EdgeInsets.all(
-                    10),
-
-            decoration:
-                BoxDecoration(
-              color: AppColors.primary
-                  .withOpacity(.1),
-              borderRadius:
-                  BorderRadius
-                      .circular(
-                          12),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-
             child: Icon(
               icon,
-              color:
-                  AppColors.primary,
+              color: AppColors.primary,
             ),
           ),
-
           const SizedBox(width: 15),
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Text(
                   title,
-                  style:
-                      const TextStyle(
-                    fontWeight:
-                        FontWeight
-                            .bold,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 Text(
                   subtitle,
-                  style:
-                      const TextStyle(
-                    color:
-                        Colors.grey,
+                  style: const TextStyle(
+                    color: Colors.grey,
                     fontSize: 12,
                   ),
                 )
               ],
             ),
           ),
-
           Switch(
             value: value,
-            activeColor:
-                AppColors.primary,
+            activeColor: AppColors.primary,
             onChanged: onChanged,
           )
         ],
@@ -544,42 +468,25 @@ class _SettingsScreenState
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        margin:
-            const EdgeInsets.only(
-                bottom: 15),
-
-        padding:
-            const EdgeInsets.all(
-                18),
-
+        margin: const EdgeInsets.only(bottom: 15),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius:
-              BorderRadius.circular(
-                  18),
+          borderRadius: BorderRadius.circular(18),
         ),
-
         child: Row(
           children: [
-
             Icon(
               icon,
-              color: isLogout
-                  ? Colors.red
-                  : AppColors.primary,
+              color: isLogout ? Colors.red : AppColors.primary,
             ),
-
             const SizedBox(width: 15),
-
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
-                  fontWeight:
-                      FontWeight.w600,
-                  color: isLogout
-                      ? Colors.red
-                      : Colors.black,
+                  fontWeight: FontWeight.w600,
+                  color: isLogout ? Colors.red : Colors.black,
                 ),
               ),
             ),
@@ -761,9 +668,12 @@ class _SettingsScreenState
   }
 
   Future<void> _logout() async {
+    _showToast('Logging out...', isLoading: true, autoDismiss: false);
+    
     final res = await _auth.logout();
 
     if (!mounted) return;
+    _hideToast();
 
     if (res['success'] != true) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -777,7 +687,7 @@ class _SettingsScreenState
     }
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
       (route) => false,
     );
   }

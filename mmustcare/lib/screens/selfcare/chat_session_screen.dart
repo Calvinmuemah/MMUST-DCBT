@@ -613,95 +613,100 @@ class _ChatSessionScreenState extends State<ChatSessionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF5F7FB),
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
 
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text("MMUSTCare CBT"),
         centerTitle: true,
       ),
 
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: messages.length,
-              itemBuilder: (context, index) =>
-                  bubble(messages[index]),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: messages.length,
+                itemBuilder: (context, index) =>
+                    bubble(messages[index]),
+              ),
             ),
-          ),
 
-          if (aiTyping) typingIndicator(),
+            if (aiTyping) typingIndicator(),
 
-          _voiceListeningBanner(),
+            _voiceListeningBanner(),
 
-          _emergencySupportBanner(),
+            _emergencySupportBanner(),
 
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            color: Colors.white,
-            child: TextField(
-              controller: controller,
-              minLines: 1,
-              maxLines: 5,
-              textInputAction: TextInputAction.send,
-              onSubmitted: !listening && hasTypedText && !sending ? (_) => sendMessage() : null,
-              decoration: InputDecoration(
-                hintText: "Talk to MMUSTCare...",
-                filled: true,
-                fillColor: Colors.grey.shade200,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
-                suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-                suffixIcon: Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (voiceChatActive) ...[
-                        _ComposerActionButton(
-                          tooltip: 'Stop voice input',
-                          icon: Icons.close,
-                          backgroundColor: Colors.white,
-                          iconColor: Colors.black87,
-                          onTap: _cancelVoiceInput,
-                        ),
-                      ] else if (!hasTypedText && !sending) ...[
-                        _ComposerActionButton(
-                          tooltip: 'Voice input, text reply',
-                          icon: listening ? Icons.mic_off : Icons.mic,
-                          backgroundColor: listening ? Colors.red.withOpacity(0.14) : Colors.white,
-                          iconColor: listening ? Colors.red : Colors.black87,
-                          onTap: _startVoiceNote,
-                        ),
-                        const SizedBox(width: 8),
-                        _ComposerActionButton(
-                          tooltip: 'Voice chat',
-                          icon: Icons.graphic_eq,
-                          backgroundColor: voiceChatActive ? Colors.blue.withOpacity(0.14) : Colors.white,
-                          iconColor: Colors.black87,
-                          onTap: _startVoiceChat,
-                        ),
-                      ] else ...[
-                        _ComposerActionButton(
-                          tooltip: 'Send message',
-                          icon: Icons.arrow_upward,
-                          backgroundColor: Colors.black87,
-                          iconColor: Colors.white,
-                          onTap: sending ? null : sendMessage,
-                        ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              color: Colors.white,
+              child: TextField(
+                controller: controller,
+                minLines: 1,
+                maxLines: 5,
+                textInputAction: TextInputAction.send,
+                onSubmitted: !listening && hasTypedText && !sending ? (_) => sendMessage() : null,
+                decoration: InputDecoration(
+                  hintText: "Talk to MMUSTCare...",
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                  suffixIcon: Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (voiceChatActive) ...[
+                          _ComposerActionButton(
+                            tooltip: 'Stop voice input',
+                            icon: Icons.close,
+                            backgroundColor: Colors.white,
+                            iconColor: Colors.black87,
+                            onTap: _cancelVoiceInput,
+                          ),
+                        ] else if (!hasTypedText && !sending) ...[
+                          _ComposerActionButton(
+                            tooltip: 'Voice input, text reply',
+                            icon: listening ? Icons.mic_off : Icons.mic,
+                            backgroundColor: listening ? Colors.red.withOpacity(0.14) : Colors.white,
+                            iconColor: listening ? Colors.red : Colors.black87,
+                            onTap: _startVoiceNote,
+                          ),
+                          const SizedBox(width: 8),
+                          _ComposerActionButton(
+                            tooltip: 'Voice chat',
+                            icon: Icons.graphic_eq,
+                            backgroundColor: voiceChatActive ? Colors.blue.withOpacity(0.14) : Colors.white,
+                            iconColor: Colors.black87,
+                            onTap: _startVoiceChat,
+                          ),
+                        ] else ...[
+                          _ComposerActionButton(
+                            tooltip: 'Send message',
+                            icon: Icons.arrow_upward,
+                            backgroundColor: Colors.black87,
+                            iconColor: Colors.white,
+                            onTap: sending ? null : sendMessage,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

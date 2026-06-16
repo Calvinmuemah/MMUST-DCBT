@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../../core/services/api_error_utils.dart';
 import '../../core/theme/app_colors.dart';
 
 import '../therapist/therapist_screen.dart';
@@ -181,7 +181,7 @@ Future<void> loadUserData() async {
       if (!mounted) return;
       Navigator.pop(context); // hide loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
+        SnackBar(content: Text(friendlyApiErrorMessage(e))),
       );
     }
   }
@@ -196,6 +196,7 @@ Future<void> loadUserData() async {
     return Scaffold(
 
       backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
 
       bottomNavigationBar:
       BottomNavigationBar(

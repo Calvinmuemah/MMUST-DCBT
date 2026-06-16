@@ -361,10 +361,11 @@ class _JournalScreenState extends State<JournalScreen> {
     final progressSpots = _timelineSpots();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
         title: const Text(
           'Journal',
@@ -667,6 +668,16 @@ class _JournalScreenState extends State<JournalScreen> {
               label: 'Journal entries',
               value: attendance['journalCount']?.toString() ?? '0',
               color: Colors.teal,
+            ),
+            _statChip(
+              label: 'Reflections',
+              value: attendance['reflectionsCount']?.toString() ?? '0',
+              color: Colors.purple,
+            ),
+            _statChip(
+              label: 'Assessments',
+              value: attendance['assessmentsCount']?.toString() ?? '0',
+              color: Colors.green,
             ),
             _statChip(
               label: 'Active days',

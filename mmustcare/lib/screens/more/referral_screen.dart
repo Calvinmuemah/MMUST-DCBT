@@ -31,11 +31,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
     if (mounted) {
       setState(() => _loading = true);
     }
-
     final res = await _service.getMyReferral();
-
     if (!mounted) return;
-
     if (res['success'] == true && res['data'] != null) {
       final data = res['data'] as Map<String, dynamic>;
       setState(() {
@@ -48,7 +45,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
       });
       return;
     }
-
     setState(() => _loading = false);
   }
 
@@ -63,7 +59,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   Future<void> _showApplyDialog() async {
     final TextEditingController ctrl = TextEditingController();
-
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -94,23 +89,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   await _loadOverview();
                   return;
                 }
-
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      applyRes['message']?.toString() ?? 'Failed to apply',
-                    ),
-                  ),
+                  SnackBar(content: Text(applyRes['message']?.toString() ?? 'Failed to apply')),
                 );
               } else {
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      valid['message']?.toString() ?? 'Invalid code',
-                    ),
-                  ),
+                  SnackBar(content: Text(valid['message']?.toString() ?? 'Invalid code')),
                 );
               }
             },
@@ -124,12 +110,12 @@ class _ReferralScreenState extends State<ReferralScreen> {
   @override
   Widget build(BuildContext context) {
     final displayCode = _referralCode.isNotEmpty ? _referralCode : 'MMUST2026';
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -147,172 +133,64 @@ class _ReferralScreenState extends State<ReferralScreen> {
           ),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.secondary],
-                      ),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.card_giftcard,
-                            color: Colors.white,
-                            size: 40,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        const Text(
-                          'Invite Friends',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Share MMUSTCare with your friends and grow together.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(.03),
-                          blurRadius: 10,
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Your Referral Code',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(.08),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Center(
-                            child: SelectableText(
-                              displayCode,
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 25),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _copyCode,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.copy, color: Colors.white),
-                                label: const Text(
-                                  'Copy',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _showApplyDialog,
-                                style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.send,
-                                  color: AppColors.primary,
-                                ),
-                                label: const Text(
-                                  'Apply',
-                                  style: TextStyle(color: AppColors.primary),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _statCard(
-                          _invitesCount.toString(),
-                          'Invites',
-                          Icons.people,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: _statCard(
-                          _invitedUsers.length.toString(),
-                          'Joined',
-                          Icons.check_circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_referredBy != null) ...[
-                    const SizedBox(height: 20),
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(25),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, AppColors.secondary],
+                        ),
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.card_giftcard,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          const Text(
+                            'Invite Friends',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Share MMUSTCare with your friends and grow together.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(.03),
@@ -321,38 +199,144 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         ],
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Referred By',
+                            'Your Referral Code',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                              fontSize: 14,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(_referredBy?['name']?.toString() ?? 'Unknown'),
-                          Text(_referredBy?['email']?.toString() ?? ''),
+                          const SizedBox(height: 18),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(.08),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Center(
+                              child: SelectableText(
+                                displayCode,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _copyCode,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.copy, color: Colors.white),
+                                  label: const Text(
+                                    'Copy',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _showApplyDialog,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.send,
+                                    color: AppColors.primary,
+                                  ),
+                                  label: const Text(
+                                    'Apply',
+                                    style: TextStyle(color: AppColors.primary),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 25),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _statCard(
+                            _invitesCount.toString(),
+                            'Invites',
+                            Icons.people,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: _statCard(
+                            _invitedUsers.length.toString(),
+                            'Joined',
+                            Icons.check_circle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_referredBy != null) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(.03),
+                              blurRadius: 10,
+                            )
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Referred By',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(_referredBy?['name']?.toString() ?? 'Unknown'),
+                            Text(_referredBy?['email']?.toString() ?? ''),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Text(
+                      'Reward points: $_rewardPoints',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                   ],
-                  const SizedBox(height: 20),
-                  Text(
-                    'Reward points: $_rewardPoints',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
-  Widget _statCard(
-    String number,
-    String title,
-    IconData icon,
-  ) {
+  Widget _statCard(String number, String title, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(

@@ -120,36 +120,45 @@ class _ReflectionHistoryScreenState extends State<ReflectionHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reflections')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _items.isEmpty
-              ? const Center(child: Text('No reflections yet'))
-                : ListView.builder(
-                  itemCount: _items.length,
-                  itemBuilder: (context, idx) {
-                    final item = _items[idx];
-                    return Dismissible(
-                      key: Key(item['id'] ?? idx.toString()),
-                      background: Container(color: Colors.red, alignment: Alignment.centerLeft, padding: const EdgeInsets.only(left: 20), child: const Icon(Icons.delete, color: Colors.white)),
-                      secondaryBackground: Container(color: Colors.blue, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), child: const Icon(Icons.edit, color: Colors.white)),
-                      confirmDismiss: (direction) async {
-                        if (direction == DismissDirection.startToEnd) {
-                          await _deleteReflection(item);
-                          return true;
-                        } else {
-                          await _editReflection(item);
-                          return false;
-                        }
-                      },
-                      child: ListTile(
-                        title: Text(item['text'] ?? ''),
-                        subtitle: Text(item['createdAt'] ?? ''),
-                        onTap: () => _editReflection(item),
-                      ),
-                    );
-                  },
-                ),
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        title: const Text('Reflections'),
+      ),
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _items.isEmpty
+                ? const Center(child: Text('No reflections yet'))
+                  : ListView.builder(
+                    itemCount: _items.length,
+                    itemBuilder: (context, idx) {
+                      final item = _items[idx];
+                      return Dismissible(
+                        key: Key(item['id'] ?? idx.toString()),
+                        background: Container(color: Colors.red, alignment: Alignment.centerLeft, padding: const EdgeInsets.only(left: 20), child: const Icon(Icons.delete, color: Colors.white)),
+                        secondaryBackground: Container(color: Colors.blue, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), child: const Icon(Icons.edit, color: Colors.white)),
+                        confirmDismiss: (direction) async {
+                          if (direction == DismissDirection.startToEnd) {
+                            await _deleteReflection(item);
+                            return true;
+                          } else {
+                            await _editReflection(item);
+                            return false;
+                          }
+                        },
+                        child: ListTile(
+                          title: Text(item['text'] ?? ''),
+                          subtitle: Text(item['createdAt'] ?? ''),
+                          onTap: () => _editReflection(item),
+                        ),
+                      );
+                    },
+                  ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addReflection,
         child: const Icon(Icons.add),

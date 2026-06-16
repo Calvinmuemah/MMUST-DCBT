@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/local_notification_service.dart';
@@ -7,10 +8,18 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/dashboard/reflection_history_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/assessment/assessment_screen.dart';
+import 'screens/assessment/daily_assessments_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalNotificationService.init();
+
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ),
+  );
   
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('token');
@@ -24,9 +33,14 @@ Future<void> main() async {
       final onboardingCompleted = user['onboardingCompleted'] ?? false;
       
       if (onboardingCompleted) {
-        home = const DashboardScreen();
+        final bool dailyRequired = user['dailyAssessmentRequired'] == true;
+        if (dailyRequired) {
+          home = DailyAssessmentsScreen();
+        } else {
+          home = DashboardScreen();
+        }
       } else {
-        home = const AssessmentScreen();
+        home = AssessmentScreen();
       }
     } catch (e) {
       debugPrint("Error parsing user data: $e");
@@ -42,14 +56,21 @@ class MMUSTCare extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "MMUSTCare",
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: home,
-      routes: {
-        '/reflections': (ctx) => const ReflectionHistoryScreen(),
-      },
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: MaterialApp(
+        title: "MMUSTCare",
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: home,
+        routes: {
+          '/reflections': (ctx) => const ReflectionHistoryScreen(),
+        },
+      ),
     );
   }
 }

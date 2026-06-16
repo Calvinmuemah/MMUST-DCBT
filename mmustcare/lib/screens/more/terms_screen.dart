@@ -7,7 +7,8 @@ class TermsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
 
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -24,11 +25,12 @@ class TermsScreen extends StatelessWidget {
         ),
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
 
             /// HEADER CARD
             Container(
@@ -184,6 +186,7 @@ class TermsScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

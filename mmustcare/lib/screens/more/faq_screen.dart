@@ -7,22 +7,13 @@ class FAQScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-
+        iconTheme: const IconThemeData(color: Colors.black),
         title: const Text(
           "FAQ",
           style: TextStyle(
@@ -31,41 +22,76 @@ class FAQScreen extends StatelessWidget {
           ),
         ),
       ),
-
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: const [
-
-          _FAQItem(
-            question: "What is MMUSTCare?",
-            answer:
-                "MMUSTCare is a mental wellness app designed to help students manage stress, anxiety, and emotional well-being through guided tools and AI support.",
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.9),
+                      AppColors.secondary.withOpacity(0.9),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.help_outline,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Frequently Asked Questions",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      "Find answers to common questions about MMUSTCare",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const _FAQItem(
+                question: "What is MMUSTCare?",
+                answer: "MMUSTCare is a digital companion designed to support the mental wellbeing of students using evidence-based CBT techniques.",
+              ),
+              const _FAQItem(
+                question: "Is my data private?",
+                answer: "Yes, your privacy is our priority. We use encryption and do not share your personal data with third parties without your consent.",
+              ),
+              const _FAQItem(
+                question: "How do I start a chat?",
+                answer: "Go to the Self Care tab and tap on any topic to start an interactive CBT session with our AI companion.",
+              ),
+              const _FAQItem(
+                question: "Can I use it anonymously?",
+                answer: "Absolutely. You can choose to 'Join Anonymously' during onboarding to access most features without an email account.",
+              ),
+              const _FAQItem(
+                question: "Is this a replacement for therapy?",
+                answer: "No. MMUSTCare is a support tool. If you are in a crisis, please use the Crisis Support tab to find professional help.",
+              ),
+            ],
           ),
-
-          _FAQItem(
-            question: "Can I talk to a therapist?",
-            answer:
-                "Yes. The app provides access to therapist support and guided mental health resources depending on your plan and availability.",
-          ),
-
-          _FAQItem(
-            question: "Is my data private?",
-            answer:
-                "Yes. Your data is securely stored and not shared without your consent. We prioritize your privacy and confidentiality.",
-          ),
-
-          _FAQItem(
-            question: "How does the AI help me?",
-            answer:
-                "The AI listens to your concerns, helps you reflect on thoughts, and suggests coping strategies based on CBT principles.",
-          ),
-
-          _FAQItem(
-            question: "Is MMUSTCare free?",
-            answer:
-                "The core features are free, but advanced therapist services or premium tools may be introduced later.",
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -74,70 +100,42 @@ class FAQScreen extends StatelessWidget {
 class _FAQItem extends StatelessWidget {
   final String question;
   final String answer;
-
-  const _FAQItem({
-    required this.question,
-    required this.answer,
-  });
-
+  const _FAQItem({required this.question, required this.answer});
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
+            offset: const Offset(0, 4),
+          )
         ],
       ),
-
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
+      child: ExpansionTile(
+        title: Text(
+          question,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-
-          childrenPadding: const EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            16,
-          ),
-
-          iconColor: AppColors.primary,
-          collapsedIconColor: Colors.grey,
-
-          title: Text(
-            question,
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        expandedAlignment: Alignment.topLeft,
+        children: [
+          Text(
+            answer,
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 13,
+              color: Colors.grey,
+              height: 1.5,
             ),
           ),
-
-          children: [
-            Text(
-              answer,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

@@ -59,6 +59,7 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
 
   Future<void> _createPlan() async {
     final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final nameController = TextEditingController();
     final targetController = TextEditingController();
 
@@ -154,11 +155,11 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
                           ),
                           onPressed: () {
                             final name = nameController.text.trim();
-                            final target = double.tryParse(
-                              targetController.text.trim(),
-                            );
+                            final targetRaw = targetController.text.trim();
+                            final target = double.tryParse(targetRaw);
 
                             if (name.isEmpty || target == null || target <= 0) {
+                              ScaffoldMessenger.of(context).hideCurrentSnackBar();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Enter a valid name and target amount'),
@@ -200,7 +201,7 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
     nameController.dispose();
     targetController.dispose();
 
-    if (createdPlan == null) {
+    if (createdPlan == null || !mounted) {
       return;
     }
 
@@ -214,13 +215,23 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
       return;
     }
 
+    // Give the bottom sheet a moment to fully close before pushing
+    await Future.delayed(const Duration(milliseconds: 50));
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Plan "${createdPlan.name}" created successfully'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
     await navigator.push(
       MaterialPageRoute(
         builder: (_) => FinancePlanDetailsScreen(
           plan: createdPlan,
           onDeletePlan: _deletePlanById,
           onChanged: _savePlans,
-          initialToastMessage: 'Creating ${createdPlan.name} plan',
         ),
       ),
     );
@@ -231,6 +242,7 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
   }
 
   Future<void> _deletePlanById(String planId) async {
+    if (!mounted) return;
     setState(() {
       _plans.removeWhere((plan) => plan.id == planId);
     });
@@ -238,6 +250,7 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
   }
 
   Future<void> _openPlan(FinancePlan plan) async {
+    if (!mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -278,7 +291,7 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
       },
     );
 
-    if (shouldDelete == true) {
+    if (shouldDelete == true && mounted) {
       await _deletePlanById(plan.id);
     }
   }
@@ -288,9 +301,10 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
     final totalTarget = _plans.fold<double>(0, (sum, plan) => sum + plan.targetAmount);
     final totalSpent = _plans.fold<double>(0, (sum, plan) => sum + plan.totalSpent);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black),
@@ -431,8 +445,9 @@ class _FinancePlannerScreenState extends State<FinancePlannerScreen> {
                     ...List.generate(_plans.length, (index) {
                       final plan = _plans[index];
                       return _PlanCard(
+                        key: ValueKey(plan.id),
                         plan: plan,
-                          expenseCount: plan.expenses.length,
+                        expenseCount: plan.expenses.length,
                         onTap: () => _openPlan(plan),
                         onDelete: () => _confirmDeletePlan(plan),
                       );
@@ -538,13 +553,11 @@ class FinancePlanDetailsScreen extends StatefulWidget {
     required this.plan,
     required this.onDeletePlan,
     required this.onChanged,
-    this.initialToastMessage,
   });
 
   final FinancePlan plan;
   final Future<void> Function(String planId) onDeletePlan;
   final Future<void> Function() onChanged;
-  final String? initialToastMessage;
 
   @override
   State<FinancePlanDetailsScreen> createState() => _FinancePlanDetailsScreenState();
@@ -566,6 +579,7 @@ class _FinancePlanDetailsScreenState extends State<FinancePlanDetailsScreen> {
     final amount = double.tryParse(expenseAmountController.text.trim());
 
     if (title.isEmpty || amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a valid expense title and amount')),
       );
@@ -593,6 +607,7 @@ class _FinancePlanDetailsScreenState extends State<FinancePlanDetailsScreen> {
       return;
     }
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Expense added successfully'),
@@ -632,7 +647,7 @@ class _FinancePlanDetailsScreenState extends State<FinancePlanDetailsScreen> {
       },
     );
 
-    if (shouldDelete == true) {
+    if (shouldDelete == true && mounted) {
       await widget.onDeletePlan(widget.plan.id);
       if (mounted) {
         Navigator.pop(context);
@@ -670,34 +685,6 @@ class _FinancePlanDetailsScreenState extends State<FinancePlanDetailsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            if (widget.initialToastMessage != null)
-              Container(
-                margin: const EdgeInsets.only(bottom: 18),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_outline, color: AppColors.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        widget.initialToastMessage!,
-                        style: const TextStyle(
-                          color: AppColors.textDark,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
@@ -881,6 +868,7 @@ class _FinancePlanDetailsScreenState extends State<FinancePlanDetailsScreen> {
             else
               ...widget.plan.expenses.map(
                 (expense) => Container(
+                  key: ValueKey(expense.id),
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -1028,6 +1016,7 @@ class _FinancePlanDetailsScreenState extends State<FinancePlanDetailsScreen> {
 
 class _PlanCard extends StatelessWidget {
   const _PlanCard({
+    super.key,
     required this.plan,
     required this.onTap,
     required this.onDelete,

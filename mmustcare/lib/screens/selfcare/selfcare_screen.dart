@@ -1,395 +1,229 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'chat_service.dart';
 import 'chat_session_screen.dart';
 
 class SelfCareScreen extends StatefulWidget {
   const SelfCareScreen({super.key});
-
   @override
   State<SelfCareScreen> createState() => _SelfCareScreenState();
 }
 
 class _SelfCareScreenState extends State<SelfCareScreen> {
-  String? token;
-
-  bool loading = true;
-  bool redirecting = false;
-  Map<String, int> topicUsage = {};
+  List<String> favoriteTopics = [];
   List<Map<String, dynamic>> recentChats = [];
-
-  static const String _topicUsageKey = 'selfcare_topic_usage_v1';
-  static const String _recentChatsKey = 'selfcare_recent_chats_v1';
-
-  final List<Map<String, dynamic>> topics = [
-    {"title": "Low Mood", "icon": Icons.mood_bad, "color": Colors.blue},
-    {"title": "Worry & Anxiety", "icon": Icons.psychology, "color": Colors.orange},
-    {"title": "Sleep", "icon": Icons.nightlight_round, "color": Colors.indigo},
-    {"title": "Relationships", "icon": Icons.people, "color": Colors.pink},
-    {"title": "Confidence", "icon": Icons.emoji_events, "color": Colors.green},
-    {"title": "Study Stress", "icon": Icons.school, "color": Colors.redAccent},
-    {"title": "Think–Act–Feel", "icon": Icons.sync_alt, "color": Colors.deepPurple},
-    {"title": "Pain & Emotions", "icon": Icons.healing, "color": Colors.teal},
-    {"title": "Psychoeducation", "icon": Icons.menu_book, "color": Colors.brown},
-    {"title": "Finances & Stress", "icon": Icons.attach_money, "color": Colors.greenAccent},
-  ];
+  bool loading = false;
+  bool redirecting = false;
 
   @override
   void initState() {
     super.initState();
-    loadState();
+    _loadData();
   }
 
-  Future<void> loadState() async {
+  Future<void> _loadData() async {
+    setState(() => loading = true);
     final prefs = await SharedPreferences.getInstance();
+    final favs = prefs.getStringList('favorite_topics') ?? [];
+    final chatsJson = prefs.getString('recent_chats');
+    List<Map<String, dynamic>> chats = [];
+    if (chatsJson != null) {
+      try {
+        chats = List<Map<String, dynamic>>.from(jsonDecode(chatsJson));
+      } catch (_) {}
+    }
     setState(() {
-      token = prefs.getString('token');
-      topicUsage = _decodeUsage(prefs.getString(_topicUsageKey));
-      recentChats = _decodeRecentChats(prefs.getString(_recentChatsKey));
+      favoriteTopics = favs;
+      recentChats = chats;
       loading = false;
     });
   }
 
-  Map<String, int> _decodeUsage(String? raw) {
-    if (raw == null || raw.isEmpty) return {};
-
-    try {
-      final decoded = jsonDecode(raw) as Map<String, dynamic>;
-      return decoded.map((key, value) => MapEntry(key, (value as num).toInt()));
-    } catch (_) {
-      return {};
-    }
-  }
-
-  List<Map<String, dynamic>> _decodeRecentChats(String? raw) {
-    if (raw == null || raw.isEmpty) return [];
-
-    try {
-      final decoded = jsonDecode(raw) as List<dynamic>;
-      return decoded
-          .map((item) => Map<String, dynamic>.from(item as Map))
-          .where((item) => item['sessionId'] != null)
-          .map(
-            (item) => {
-              'sessionId': item['sessionId'].toString(),
-              'title': (item['title'] ?? item['topic'] ?? 'Recent chat').toString(),
-              'topic': (item['topic'] ?? 'general').toString(),
-              'updatedAt': item['updatedAt']?.toString(),
-            },
-          )
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<void> _saveUsage() async {
+  Future<void> openChat(String topic) async {
+    setState(() => redirecting = true);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_topicUsageKey, jsonEncode(topicUsage));
-  }
-
-  Future<void> _saveRecentChats() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_recentChatsKey, jsonEncode(recentChats));
-  }
-
-  List<String> get favoriteTopics {
-    final entries = topicUsage.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    return entries.take(3).map((entry) => entry.key).toList();
-  }
-
-  void _recordTopicUse(String title) {
-    setState(() {
-      topicUsage[title] = (topicUsage[title] ?? 0) + 1;
-    });
-    _saveUsage();
-  }
-
-  void _recordRecentChat({
-    required String sessionId,
-    required String title,
-    required String topic,
-  }) {
-    setState(() {
-      recentChats.removeWhere((item) => item['sessionId']?.toString() == sessionId);
-      recentChats.insert(0, {
-        'sessionId': sessionId,
-        'title': title,
-        'topic': topic,
-        'updatedAt': DateTime.now().toIso8601String(),
-      });
-
-      if (recentChats.length > 5) {
-        recentChats = recentChats.take(5).toList();
+    final token = prefs.getString('token');
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        setState(() => redirecting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please login to start a session.')),
+        );
       }
-    });
-
-    _saveRecentChats();
-  }
-
-  void _setRedirecting(bool value) {
-    if (!mounted) return;
-
-    setState(() {
-      redirecting = value;
-    });
-  }
-
-  String mapTopic(String title) {
-    switch (title.toLowerCase()) {
-      case "low mood":
-        return "depression";
-      case "worry & anxiety":
-        return "anxiety";
-      case "sleep":
-        return "sleep";
-      case "relationships":
-        return "relationships";
-      case "study stress":
-        return "academic stress";
-      case "think–act–feel":
-        return "overthinking";
-      case "pain & emotions":
-        return "depression";
-      default:
-        return "general";
-    }
-  }
-
-  Future<void> openChat(String title) async {
-    if (token == null || token!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please login again to start a chat.")),
-      );
       return;
     }
-
-    final topic = mapTopic(title);
-
     try {
-      _setRedirecting(true);
-
-      final res = await ChatService.startSession(topic, token!);
-
+      final res = await ChatService.startSession(topic, token);
       final sessionId = res["sessionId"];
-      final firstMessage = res["message"] ?? "Hello 👋";
-
-      if (sessionId == null) {
-        throw Exception("Session ID is null");
+      final firstMessage = res["message"] ?? "Hello! How can I help you with $topic today?";
+      if (mounted) {
+        setState(() => redirecting = false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatSessionScreen(
+              sessionId: sessionId.toString(),
+              token: token,
+              initialMessage: firstMessage,
+            ),
+          ),
+        ).then((_) => _loadData());
       }
-
-      _setRedirecting(false);
-
-      if (!mounted) return;
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatSessionScreen(
-            sessionId: sessionId.toString(),
-            token: token!,
-            initialMessage: firstMessage,
-          ),
-        ),
-      );
-
-      _recordTopicUse(title);
-      _recordRecentChat(
-        sessionId: sessionId.toString(),
-        title: title,
-        topic: topic,
-      );
     } catch (e) {
-      _setRedirecting(false);
-    }
-  }
-
-  Future<void> openRecentChat(Map<String, dynamic> chat) async {
-    final sessionId = chat['sessionId']?.toString();
-    final title = chat['title']?.toString() ?? 'Recent chat';
-    final topic = chat['topic']?.toString() ?? 'general';
-
-    if (token == null || token!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login again to open chat history.')),
-      );
-      return;
-    }
-
-    if (sessionId == null || sessionId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This chat could not be opened.')),
-      );
-      return;
-    }
-
-    try {
-      _setRedirecting(true);
-
-      await ChatService.getMessages(sessionId, token!);
-      _recordTopicUse(title);
-      _recordRecentChat(sessionId: sessionId, title: title, topic: topic);
-
-      if (!mounted) return;
-
-      _setRedirecting(false);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatSessionScreen(
-            sessionId: sessionId,
-            token: token!,
-          ),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-
-          _setRedirecting(false);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "You seem to be offline. Reconnect to open that chat history.",
-          ),
-        ),
-      );
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatSessionScreen(
-            sessionId: sessionId,
-            token: token!,
-            initialMessage:
-                "You're offline right now. Reconnect to view this chat history.",
-          ),
-        ),
-      );
+      if (mounted) {
+        setState(() => redirecting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final List<Map<String, dynamic>> toolkit = [
+      {"title": "Anxiety", "icon": Icons.air, "color": Colors.blue},
+      {"title": "Depression", "icon": Icons.cloud_queue, "color": Colors.indigo},
+      {"title": "Stress", "icon": Icons.bolt, "color": Colors.orange},
+      {"title": "Self-Esteem", "icon": Icons.face, "color": Colors.pink},
+      {"title": "Relationships", "icon": Icons.favorite_border, "color": Colors.red},
+      {"title": "Sleep", "icon": Icons.bedtime_outlined, "color": Colors.deepPurple},
+      {"title": "Finances", "icon": Icons.payments_outlined, "color": Colors.green},
+      {"title": "Work", "icon": Icons.work_outline, "color": Colors.brown},
+      {"title": "Examinations", "icon": Icons.assignment_outlined, "color": Colors.cyan},
+      {"title": "Studies", "icon": Icons.school_outlined, "color": Colors.blueGrey},
+      {"title": "Family", "icon": Icons.people_outline, "color": Colors.teal},
+      {"title": "Pain", "icon": Icons.healing_outlined, "color": Colors.orangeAccent},
+      {"title": "Drugs Abuse", "icon": Icons.warning_amber_outlined, "color": Colors.deepOrange},
+      {"title": "Gambling", "icon": Icons.casino_outlined, "color": Colors.purpleAccent},
+      {"title": "Social Anxiety", "icon": Icons.forum_outlined, "color": Colors.blueAccent},
+      {"title": "Procrastination", "icon": Icons.timer_outlined, "color": Colors.amber},
+    ];
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-      body: Stack(
-        children: [
-          loading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-            const Text(
-              "Your Mental Wellness Toolkit",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 6),
-
-            const Text(
-              "Explore CBT-based tools to help you manage thoughts, emotions, and stress.",
-              style: TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text("⭐ Favorites",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            if (favoriteTopics.isEmpty)
-              const Text(
-                'Your most used topics will appear here as you chat.',
-                style: TextStyle(color: Colors.grey),
-              )
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: favoriteTopics
-                    .map((item) => GestureDetector(
-                          onTap: () => openChat(item),
-                          child: _chip(item, Colors.amber),
-                        ))
-                    .toList(),
-              ),
-
-            const SizedBox(height: 20),
-
-            const Text("🕒 Recent",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            if (recentChats.isEmpty)
-              const Text(
-                'Your recent chat sessions will appear here.',
-                style: TextStyle(color: Colors.grey),
-              )
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: recentChats
-                    .map((chat) => GestureDetector(
-                          onTap: () => openRecentChat(chat),
-                          child: _chip(chat['title']?.toString() ?? 'Recent chat', Colors.blueGrey),
-                        ))
-                    .toList(),
-              ),
-
-            const SizedBox(height: 25),
-
-            const Text("CBT Topics",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-
-            const SizedBox(height: 15),
-
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: topics.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.1,
-              ),
-              itemBuilder: (context, index) {
-                final topic = topics[index];
-                return GestureDetector(
-                  onTap: () => openChat(topic["title"].toString()),
-                  child: _topicCard(
-                    topic["title"],
-                    topic["icon"],
-                    topic["color"],
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            loading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Your Mental Wellness Toolkit",
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "Explore CBT-based tools to help you manage thoughts, emotions, and stress.",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text("⭐ Favorites", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        if (favoriteTopics.isEmpty)
+                          const Text(
+                            'Your most used topics will appear here as you chat.',
+                            style: TextStyle(color: Colors.grey),
+                          )
+                        else
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: favoriteTopics
+                                .map((item) => GestureDetector(
+                                      onTap: () => openChat(item),
+                                      child: _chip(item, Colors.amber),
+                                    ))
+                                .toList(),
+                          ),
+                        const SizedBox(height: 20),
+                        const Text("🕒 Recent", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        if (recentChats.isEmpty)
+                          const Text(
+                            'No recent activity. Start your first session below!',
+                            style: TextStyle(color: Colors.grey),
+                          )
+                        else
+                          SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: recentChats.length,
+                              itemBuilder: (ctx, i) {
+                                final chat = recentChats[i];
+                                final topic = chat['topic']?.toString() ?? 'general';
+                                return GestureDetector(
+                                  onTap: () => openChat(topic),
+                                  child: Container(
+                                    width: 140,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.grey.shade200),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(topic, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        const Spacer(),
+                                        Text(chat['date'] ?? '', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        const SizedBox(height: 30),
+                        const Text("🛠️ CBT Tools", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 15),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            childAspectRatio: 1.1,
+                          ),
+                          itemCount: toolkit.length,
+                          itemBuilder: (ctx, i) {
+                            final tool = toolkit[i];
+                            return GestureDetector(
+                              onTap: () => openChat(tool['title']),
+                              child: _topicCard(tool['title'], tool['icon'], tool['color']),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-                  ],
+            if (redirecting)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.18),
+                  child: const Center(
+                    child: SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.4),
+                    ),
+                  ),
                 ),
               ),
-          if (redirecting)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.18),
-                child: Center(
-                  child: SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2.4),
-                  ),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -401,8 +235,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
         color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+      child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
     );
   }
 
@@ -411,9 +244,13 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 10)
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
         ],
       ),
       child: Column(
@@ -424,8 +261,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
             child: Icon(icon, color: color),
           ),
           const SizedBox(height: 12),
-          Text(title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 6),
           const Text(
             "Tap to start CBT session",

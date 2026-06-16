@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/services/api_error_utils.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
 import '../../core/services/auth_service.dart';
 import '../assessment/assessment_screen.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,43 +21,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _loading = false;
 
   Future<void> _handleAnonymousLogin() async {
-    final nameController = TextEditingController();
+    final prefs = await SharedPreferences.getInstance();
+    final existingToken = prefs.getString('token');
+    final existingUserJson = prefs.getString('user');
 
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("What should we call you?"),
-        content: TextField(
-          controller: nameController,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: "Enter your name",
-            filled: true,
-            fillColor: Colors.grey.shade100,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+    if (existingToken != null && existingUserJson != null) {
+      try {
+        final user = jsonDecode(existingUserJson);
+        if (user['isAnonymous'] == true) {
+          if (!mounted) return;
+          
+          // Check if onboarding was already done
+          final bool onboardingCompleted = user['onboardingCompleted'] ?? false;
+          
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => onboardingCompleted 
+                  ? DashboardScreen() 
+                  : AssessmentScreen(),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, nameController.text.trim()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text("Continue", style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+          );
+          return;
+        }
+      } catch (e) {
+        debugPrint("Error checking existing anonymous session: $e");
+      }
+    }
 
+    final name = await _showNameBottomSheet();
     if (name == null || name.isEmpty) return;
 
     setState(() {
@@ -66,7 +62,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (!mounted) return;
 
       if (result['token'] != null || result['user'] != null) {
-        // Success - Navigate to assessment
+        // Ensure local user data correctly flags anonymous and daily status
+        try {
+          final p = await SharedPreferences.getInstance();
+          final uJson = p.getString('user');
+          if (uJson != null) {
+            final u = jsonDecode(uJson);
+            u['isAnonymous'] = true;
+            u['dailyAssessmentRequired'] = false; // Fresh login shouldn't require immediate daily check
+            await p.setString('user', jsonEncode(u));
+          }
+        } catch (_) {}
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -81,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(friendlyApiErrorMessage(e))),
       );
     } finally {
       if (mounted) {
@@ -90,6 +97,133 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         });
       }
     }
+  }
+
+  Future<String?> _showNameBottomSheet() async {
+    final nameController = TextEditingController();
+    
+    return await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.4,
+        maxChildSize: 0.8,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            children: [
+              Center(
+                child: Container(
+                  width: 46,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.primary,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "What should we call you?",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Your name helps us personalize your journey.",
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 25),
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: "Enter your name",
+                  filled: true,
+                  fillColor: const Color(0xFFF7F8FA),
+                  prefixIcon: const Icon(Icons.edit_outlined, size: 20),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context, nameController.text.trim()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    "Continue",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -160,13 +294,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.08),
+                            color: Colors.white,
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 20,
+                              ),
+                            ],
                           ),
-                          child: const Icon(
-                            Icons.psychology_alt,
-                            size: 70,
-                            color: AppColors.primary,
+                          child: Image.asset(
+                            'assets/logo/app_icon.png',
+                            height: 100,
+                            width: 100,
                           ),
                         ),
 

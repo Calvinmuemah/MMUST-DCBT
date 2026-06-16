@@ -435,6 +435,13 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
+      // Always clear local data
+      await prefs.remove('token');
+      await prefs.remove('user');
+      await prefs.remove('name');
+      await prefs.remove('email');
+      await prefs.remove('userId');
+
       final headers = <String, String>{
         "Content-Type": "application/json",
       };
@@ -454,23 +461,19 @@ class AuthService {
         return {
           ...decoded,
           "statusCode": response.statusCode,
-          "success": response.statusCode >= 200 && response.statusCode < 300,
+          "success": true, // We return true because local logout is done
         };
       }
 
       return {
         "statusCode": response.statusCode,
-        "success": response.statusCode >= 200 && response.statusCode < 300,
-        "message": response.body,
+        "success": true,
+        "message": "Logged out locally",
       };
     } catch (e) {
       return {
-        "success": false,
-        "statusCode": 0,
-        "message": friendlyApiErrorMessage(
-          e,
-          fallback: 'Unable to log out right now. Check your connection and try again.',
-        ),
+        "success": true, // Still return true as local cleanup is likely done or should be forced
+        "message": "Logged out locally",
       };
     }
   }
@@ -564,6 +567,81 @@ class AuthService {
           e,
           fallback: 'Unable to submit daily assessment right now. Check your connection and try again.',
         ),
+      };
+    }
+  }
+
+  // =======================
+  // PASSWORD RESET / OTP
+  // =======================
+
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse("${ApiConstants.baseUrl}/auth/forgot-password"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email}),
+      );
+
+      final decoded = jsonDecode(response.body);
+      return {
+        ...decoded,
+        "success": response.statusCode >= 200 && response.statusCode < 300,
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": friendlyApiErrorMessage(e),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
+    try {
+      final response = await http.post(
+        Uri.parse("${ApiConstants.baseUrl}/auth/verify-otp"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "otp": otp}),
+      );
+
+      final decoded = jsonDecode(response.body);
+      return {
+        ...decoded,
+        "success": response.statusCode >= 200 && response.statusCode < 300,
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": friendlyApiErrorMessage(e),
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("${ApiConstants.baseUrl}/auth/reset-password"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email,
+          "otp": otp,
+          "newPassword": newPassword,
+        }),
+      );
+
+      final decoded = jsonDecode(response.body);
+      return {
+        ...decoded,
+        "success": response.statusCode >= 200 && response.statusCode < 300,
+      };
+    } catch (e) {
+      return {
+        "success": false,
+        "message": friendlyApiErrorMessage(e),
       };
     }
   }
