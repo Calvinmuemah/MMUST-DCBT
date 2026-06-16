@@ -531,6 +531,63 @@ const getAttendanceSummary = async (userId) => {
     }
   }
 
+  let streakResult = { rows: [] };
+  try {
+    streakResult = await pool.query(
+      `SELECT DISTINCT created_at::date AS day 
+       FROM (
+         SELECT created_at FROM user_login_events WHERE user_id = $1
+         UNION ALL
+         SELECT cm.created_at FROM chat_messages cm
+         INNER JOIN chat_sessions cs ON cs.id = cm.session_id
+         WHERE cs.user_id = $1
+         UNION ALL
+         SELECT created_at FROM journal_entries WHERE user_id = $1
+         UNION ALL
+         SELECT created_at FROM reflections WHERE user_id = $1
+         UNION ALL
+         SELECT created_at FROM daily_assessments WHERE user_id = $1
+       ) all_activity
+       ORDER BY day DESC`,
+      [userId]
+    );
+  } catch (error) {
+    if (!isMissingJournalTableError(error)) {
+      throw error;
+    }
+  }
+
+  let currentStreak = 0;
+  if (streakResult.rows.length > 0) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    let checkDate = new Date(streakResult.rows[0].day);
+    checkDate.setHours(0, 0, 0, 0);
+
+    // If the latest activity is not today or yesterday, the streak is 0
+    if (checkDate.getTime() === today.getTime() || checkDate.getTime() === yesterday.getTime()) {
+      currentStreak = 1;
+      let lastDate = checkDate;
+      
+      for (let i = 1; i < streakResult.rows.length; i++) {
+        const nextDate = new Date(streakResult.rows[i].day);
+        nextDate.setHours(0, 0, 0, 0);
+        
+        const diff = (lastDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24);
+        if (diff === 1) {
+          currentStreak++;
+          lastDate = nextDate;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
   return {
     loginCount: loginCount.rows[0]?.total || 0,
     chatCount: chatCount.rows[0]?.total || 0,
@@ -538,6 +595,7 @@ const getAttendanceSummary = async (userId) => {
     reflectionsCount: reflectionsCount.rows[0]?.total || 0,
     assessmentsCount: assessmentsCount.rows[0]?.total || 0,
     activeDays: activeDays.rows[0]?.total || 0,
+    currentStreak: currentStreak,
   };
 };
 
