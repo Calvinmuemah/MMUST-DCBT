@@ -3,7 +3,8 @@ import {
   getDashboardMetrics, 
   getUsers, 
   getCrisisReports,
-  getLogs
+  getLogs,
+  deleteUser
 } from "../controllers/admin.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 
