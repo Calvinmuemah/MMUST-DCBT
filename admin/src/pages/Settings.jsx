@@ -8,12 +8,20 @@ const SettingsPage = () => {
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
   
-  const user = JSON.parse(localStorage.getItem('admin_user') || '{}');
+  let user = {};
+  try {
+    const savedUser = localStorage.getItem('admin_user');
+    if (savedUser && savedUser !== 'undefined') {
+      user = JSON.parse(savedUser);
+    }
+  } catch (e) {
+    console.error("Settings: Failed to parse user", e);
+  }
 
   // Form States
   const [profileForm, setProfileForm] = useState({
-    name: user.name || '',
-    email: user.email || ''
+    name: user?.name || '',
+    email: user?.email || ''
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -23,8 +31,8 @@ const SettingsPage = () => {
   });
 
   const [notifForm, setNotifForm] = useState({
-    notificationsEnabled: user.notificationsEnabled ?? true,
-    emailUpdates: user.emailUpdates ?? true
+    notificationsEnabled: user?.notificationsEnabled ?? true,
+    emailUpdates: user?.emailUpdates ?? true
   });
 
   const handleUpdateProfile = async (e) => {
