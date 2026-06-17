@@ -126,42 +126,32 @@ const SettingsPage = () => {
         {/* Form Content */}
         <div className="md:col-span-3">
           {activeTab === 'profile' && (
-            <form onSubmit={handleUpdateProfile} className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
+            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm space-y-6">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 <User className="text-primary" size={20} />
                 Profile Details
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Full Name</label>
-                  <input 
-                    type="text" 
-                    value={profileForm.name}
-                    onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                  />
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Full Name</div>
+                  <div className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-800 font-bold">
+                    {user?.name || 'N/A'}
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Email Address</label>
-                  <input 
-                    type="email" 
-                    value={profileForm.email}
-                    onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
-                  />
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Email Address</div>
+                  <div className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-800 font-bold">
+                    {user?.email || 'N/A'}
+                  </div>
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
-                <div className="text-xs text-slate-400 font-medium">Your role is fixed as <span className="font-bold text-primary capitalize">{user.role}</span></div>
-                <button 
-                  disabled={loading}
-                  className="bg-primary text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all flex items-center gap-2 disabled:opacity-50"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                  Save Changes
-                </button>
+              <div className="pt-4 border-t border-slate-50">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Administrative Role</div>
+                <span className="inline-flex px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-black uppercase tracking-widest border border-primary/10">
+                  {user?.role || 'Admin'}
+                </span>
               </div>
-            </form>
+            </div>
           )}
 
           {activeTab === 'security' && (
@@ -172,39 +162,46 @@ const SettingsPage = () => {
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Current Password</label>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Current Password</label>
                   <input 
                     type="password" 
+                    required
+                    placeholder="••••••••"
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all font-medium"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">New Password</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">New Password</label>
                     <input 
                       type="password" 
+                      required
+                      placeholder="Min. 6 characters"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Confirm New Password</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Confirm New Password</label>
                     <input 
                       type="password" 
+                      required
+                      placeholder="Confirm new password"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition-all font-medium"
                     />
                   </div>
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-50 text-right">
+              <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
+                <p className="text-xs text-slate-400 font-medium max-w-[240px]">Ensuring a strong password helps protect your administrative access.</p>
                 <button 
                   disabled={loading}
-                  className="bg-orange-500 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all flex items-center gap-2 disabled:opacity-50 ml-auto"
+                  className="bg-orange-500 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-600 transition-all flex items-center gap-2 disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="animate-spin" size={18} /> : <Shield size={18} />}
                   Update Password
