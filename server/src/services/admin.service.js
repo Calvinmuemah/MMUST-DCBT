@@ -116,25 +116,24 @@ export const getDashboardStats = async (range = '7d') => {
   }
 
   // 6. System Health (Table Counts)
-  try {
-    const healthResult = await pool.query(`
-      SELECT 
-        (SELECT COUNT(*) FROM users) as users_count,
-        (SELECT COUNT(*) FROM chat_sessions) as chats_count,
-        (SELECT COUNT(*) FROM chat_messages) as messages_count,
-        (SELECT COUNT(*) FROM journal_entries) as journals_count,
-        (SELECT COUNT(*) FROM reflections) as reflections_count,
-        (SELECT COUNT(*) FROM daily_assessments) as assessments_count,
-        (SELECT COUNT(*) FROM user_login_events) as logins_count
-    `);
-    stats.systemHealth = healthResult.rows[0];
-  } catch (err) {
-    // If some tables are missing, we try a safer version
+  const getCount = async (table) => {
     try {
-      const basicResult = await pool.query(`SELECT COUNT(*) as users_count FROM users`);
-      stats.systemHealth.users_count = basicResult.rows[0].users_count;
-    } catch (e) {}
-  }
+      const res = await pool.query(`SELECT COUNT(*) FROM ${table}`);
+      return parseInt(res.rows[0].count);
+    } catch (err) {
+      return 0;
+    }
+  };
+
+  stats.systemHealth = {
+    users_count: await getCount('users'),
+    chats_count: await getCount('chat_sessions'),
+    messages_count: await getCount('chat_messages'),
+    journals_count: await getCount('journal_entries'),
+    reflections_count: await getCount('reflections'),
+    assessments_count: await getCount('daily_assessments'),
+    logins_count: await getCount('daily_assessments') // Using assessments as a proxy for logins as per previous change
+  };
 
   // 7. Activity Heatmap (By Hour)
   try {
@@ -142,7 +141,7 @@ export const getDashboardStats = async (range = '7d') => {
       SELECT 
         EXTRACT(HOUR FROM created_at) as hour,
         COUNT(*) as count
-      FROM user_login_events
+      FROM daily_assessments
       WHERE created_at >= NOW() - INTERVAL '${interval}'
       GROUP BY hour
       ORDER BY hour ASC
@@ -155,17 +154,25 @@ export const getDashboardStats = async (range = '7d') => {
   // 8. Streak Statistics
   try {
     const streakStats = await pool.query(`
-      WITH user_streaks AS (
-        SELECT DISTINCT user_id, created_at::date as day FROM user_login_events
+      WITH user_dates AS (
+        SELECT DISTINCT user_id, assessment_date FROM daily_assessments
+      ),
+      user_groups AS (
+        SELECT 
+          user_id, 
+          assessment_date,
+          assessment_date - (ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY assessment_date))::int as grp
+        FROM user_dates
+      ),
+      streaks AS (
+        SELECT user_id, COUNT(*) as streak_length
+        FROM user_groups
+        GROUP BY user_id, grp
       )
       SELECT 
-        MAX(streak_length) as max_streak,
-        ROUND(AVG(streak_length), 1) as avg_streak
-      FROM (
-        SELECT user_id, COUNT(*) as streak_length
-        FROM user_streaks
-        GROUP BY user_id
-      ) streaks
+        COALESCE(MAX(streak_length), 0) as max_streak,
+        COALESCE(ROUND(AVG(streak_length), 1), 0) as avg_streak
+      FROM streaks
     `);
     stats.streaks = {
       max_streak: streakStats.rows[0]?.max_streak || 0,

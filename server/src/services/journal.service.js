@@ -860,6 +860,21 @@ export const createReflection = async (userId, data) => {
     throw new Error("Reflection text is required");
   }
 
+  // Ensure table exists
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reflections (
+      id BIGSERIAL PRIMARY KEY,
+      public_id TEXT UNIQUE,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      mood_rating INT,
+      text TEXT NOT NULL,
+      tags JSONB DEFAULT '[]'::jsonb,
+      session_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ
+    )
+  `);
+
   const inserted = await pool.query(
     `INSERT INTO reflections (user_id, mood_rating, text, tags, session_id, updated_at)
      VALUES ($1, $2, $3, $4::jsonb, $5, NOW())
