@@ -255,14 +255,16 @@ export const deleteUser = async (userId) => {
 };
 
 export const getUserFullProfile = async (userId) => {
-  // 1. Basic User Info
+  // 1. Basic User Info - Check if it looks like a UUID or use public_id
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+  
   const userResult = await pool.query(
     `SELECT id, public_id, name, email, role, is_anonymous, 
             onboarding_answers, onboarding_total_score, onboarding_risk_level, 
             onboarding_completed, onboarding_completed_at, 
             referral_reward_points, created_at
      FROM users 
-     WHERE id = $1 OR public_id::text = $1`,
+     WHERE public_id = $1 ${isUuid ? 'OR id = $1' : ''}`,
     [userId]
   );
 

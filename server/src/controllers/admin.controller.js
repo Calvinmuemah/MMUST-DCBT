@@ -71,6 +71,7 @@ export const deleteUser = async (req, res) => {
 export const getUserDetails = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`[ADMIN] Fetching user details for: ${id}`);
     const user = await adminService.getUserFullProfile(id);
     
     if (!user) {
@@ -82,6 +83,7 @@ export const getUserDetails = async (req, res) => {
       data: user
     });
   } catch (err) {
+    console.error("[ADMIN] getUserDetails error:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
