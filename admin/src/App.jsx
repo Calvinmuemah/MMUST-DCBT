@@ -53,7 +53,7 @@ function App() {
       case '/users':
         return <UsersPage onView={(id) => navigate(`/users/${id}`)} />;
       case '/crisis':
-        return <CrisisPage />;
+        return <CrisisPage onViewUser={(id) => navigate(`/users/${id}`)} />;
       case '/insights':
         return <SystemInsights />;
       case '/logs':
