@@ -14,8 +14,19 @@ import { logout } from './services/api';
 
 function App() {
   const [path, setPath] = useState(window.location.pathname);
+  
   const token = localStorage.getItem('admin_token');
-  const user = JSON.parse(localStorage.getItem('admin_user') || 'null');
+  
+  let user = null;
+  try {
+    const savedUser = localStorage.getItem('admin_user');
+    if (savedUser && savedUser !== 'undefined') {
+      user = JSON.parse(savedUser);
+    }
+  } catch (e) {
+    console.error("Failed to parse user from storage", e);
+    localStorage.removeItem('admin_user');
+  }
   
   // Update state when URL changes (for browser back/forward)
   useEffect(() => {

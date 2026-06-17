@@ -34,7 +34,7 @@ const SettingsPage = () => {
     setError(null);
     try {
       const res = await updateProfile(profileForm);
-      localStorage.setItem('admin_user', JSON.stringify(res.data));
+      localStorage.setItem('admin_user', JSON.stringify(res.user));
       setMessage("Profile updated successfully!");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update profile.");
@@ -69,7 +69,7 @@ const SettingsPage = () => {
     setError(null);
     try {
       const res = await updatePreferences(notifForm);
-      localStorage.setItem('admin_user', JSON.stringify(res.data));
+      localStorage.setItem('admin_user', JSON.stringify(res.user));
       setMessage("Preferences updated successfully!");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update preferences.");
