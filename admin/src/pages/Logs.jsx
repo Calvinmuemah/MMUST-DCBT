@@ -10,21 +10,6 @@ import {
   Info, 
   CheckCircle,
   Clock,
-  LayoutGrid
-} from 'lucide-react';
-
-import React, { useEffect, useState } from 'react';
-import { getLogs } from '../services/api';
-import { 
-  Terminal, 
-  Search, 
-  Filter, 
-  Database, 
-  Lock, 
-  AlertCircle, 
-  Info, 
-  CheckCircle,
-  Clock,
   LayoutGrid,
   Eye,
   X
