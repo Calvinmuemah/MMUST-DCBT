@@ -14,7 +14,7 @@ const Sidebar = ({ currentPath, setPath }) => {
   const menuItems = [
     { id: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: '/insights', label: 'System Insights', icon: <BarChart3 size={20} /> },
-    { id: '/users', label: 'Students', icon: <Users size={20} /> },
+    { id: '/users', label: 'Users', icon: <Users size={20} /> },
     { id: '/crisis', label: 'High Risk', icon: <AlertCircle size={20} /> },
     { id: '/logs', label: 'System Logs', icon: <Terminal size={20} /> },
     { id: '/settings', label: 'Settings', icon: <Settings size={20} /> },

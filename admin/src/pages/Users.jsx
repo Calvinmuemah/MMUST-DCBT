@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getUsers, deleteUser } from '../services/api';
-import { User, UserMinus, ShieldCheck, Mail, Calendar, Trash2, Search } from 'lucide-react';
+import { getUsers } from '../services/api';
+import { User, UserMinus, ShieldCheck, Mail, Calendar, Search, Eye, UserCog, GraduationCap } from 'lucide-react';
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -24,15 +24,10 @@ const UsersPage = () => {
     fetchUsers();
   }, []);
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Are you sure you want to permanently delete user "${name}"? All their data (chats, journals, etc.) will be removed.`)) {
-      try {
-        await deleteUser(id);
-        setUsers(users.filter(u => u.id !== id));
-      } catch (err) {
-        alert("Failed to delete user. Please try again.");
-      }
-    }
+  const handleView = (user) => {
+    // For now, we can log or navigate to a profile view if it existed
+    console.log("Viewing user:", user);
+    alert(`Viewing details for ${user.name}. Detailed profile view is being implemented.`);
   };
 
   const filteredUsers = users.filter(u => {
@@ -62,7 +57,7 @@ const UsersPage = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
-          <p className="text-slate-500 text-sm">Manage student accounts and view their mental health profiles.</p>
+          <p className="text-slate-500 text-sm">Manage user accounts and view their mental health profiles.</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
@@ -91,6 +86,7 @@ const UsersPage = () => {
             <thead className="bg-slate-50/50 border-b border-slate-100 text-slate-500 font-bold text-[10px] uppercase tracking-widest">
               <tr>
                 <th className="px-6 py-4">User Details</th>
+                <th className="px-6 py-4">Role</th>
                 <th className="px-6 py-4">Session Type</th>
                 <th className="px-6 py-4">Risk Profile</th>
                 <th className="px-6 py-4">Onboarding</th>
@@ -113,6 +109,17 @@ const UsersPage = () => {
                         </div>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {user.role === 'admin' ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100">
+                        <UserCog className="w-3 h-3" /> Admin
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-50 text-slate-600 border border-slate-100">
+                        <GraduationCap className="w-3 h-3" /> Student
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     {user.is_anonymous ? (
@@ -145,18 +152,18 @@ const UsersPage = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      onClick={() => handleDelete(user.id, user.name)}
-                      className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                      title="Delete User"
+                      onClick={() => handleView(user)}
+                      className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
+                      title="View Details"
                     >
-                      <Trash2 size={18} />
+                      <Eye size={18} />
                     </button>
                   </td>
                 </tr>
               ))}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-400 italic">
+                  <td colSpan="7" className="px-6 py-12 text-center text-slate-400 italic">
                     No users found matching your criteria.
                   </td>
                 </tr>
