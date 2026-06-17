@@ -62,6 +62,18 @@ app.use("/api/v1/journal", journalRoutes);
 app.use("/api/v1/referrals", referralRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error(`[ERROR] ${err.stack}`);
+  
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  });
+});
+
 // DB connect
 connectDB();
 
