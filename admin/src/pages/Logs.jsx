@@ -89,11 +89,11 @@ const LogsPage = () => {
           <table className="w-full text-left">
             <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-black uppercase tracking-widest text-[10px]">
               <tr>
-                <th className="px-6 py-4">Timestamp</th>
-                <th className="px-6 py-4">Level</th>
-                <th className="px-6 py-4">Category</th>
-                <th className="px-6 py-4">Event</th>
-                <th className="px-6 py-4 text-right">Details</th>
+                <th className="px-6 py-4 w-[220px]">Timestamp</th>
+                <th className="px-6 py-4 w-[120px]">Level</th>
+                <th className="px-6 py-4 w-[140px]">Category</th>
+                <th className="px-6 py-4">Event Message</th>
+                <th className="px-6 py-4 w-[100px] text-right">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -106,24 +106,24 @@ const LogsPage = () => {
               ) : (
                 logs.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap w-[220px]">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
                         <Clock size={12} />
                         {new Date(log.created_at).toLocaleString()}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 w-[120px]">
                       <LevelBadge level={log.level} />
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 w-[140px]">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded border border-slate-200">
                         {log.category}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-bold text-slate-800">{log.message}</div>
+                      <div className="text-sm font-bold text-slate-800 line-clamp-1">{log.message}</div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right w-[100px]">
                       <button 
                         onClick={() => setSelectedLog(log)}
                         className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
