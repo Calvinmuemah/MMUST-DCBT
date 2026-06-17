@@ -2,28 +2,13 @@ import React, { useState } from 'react';
 import { User, Shield, Bell, Lock, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { updateProfile, updatePreferences, changePassword } from '../services/api';
 
-const SettingsPage = () => {
+const SettingsPage = ({ user, onUpdateUser }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
   
-  let user = {};
-  try {
-    const savedUser = localStorage.getItem('admin_user');
-    if (savedUser && savedUser !== 'undefined') {
-      user = JSON.parse(savedUser);
-    }
-  } catch (e) {
-    console.error("Settings: Failed to parse user", e);
-  }
-
   // Form States
-  const [profileForm, setProfileForm] = useState({
-    name: user?.name || '',
-    email: user?.email || ''
-  });
-
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -34,22 +19,6 @@ const SettingsPage = () => {
     notificationsEnabled: user?.notificationsEnabled ?? true,
     emailUpdates: user?.emailUpdates ?? true
   });
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-    setError(null);
-    try {
-      const res = await updateProfile(profileForm);
-      localStorage.setItem('admin_user', JSON.stringify(res.user));
-      setMessage("Profile updated successfully!");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to update profile.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -77,6 +46,7 @@ const SettingsPage = () => {
     setError(null);
     try {
       const res = await updatePreferences(notifForm);
+      if (onUpdateUser) onUpdateUser(res.user);
       localStorage.setItem('admin_user', JSON.stringify(res.user));
       setMessage("Preferences updated successfully!");
     } catch (err) {

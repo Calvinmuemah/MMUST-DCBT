@@ -51,6 +51,11 @@ export const register = async (name, email, password) => {
   return response.data;
 };
 
+export const getProfile = async () => {
+  const response = await api.get('/auth/profile');
+  return response.data;
+};
+
 export const getMetrics = async (range = '7d') => {
   const response = await api.get(`/admin/metrics?range=${range}`);
   return response.data.data;

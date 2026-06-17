@@ -10,23 +10,48 @@ import LogsPage from './pages/Logs';
 import SettingsPage from './pages/Settings';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
-import { logout } from './services/api';
+import { logout, getProfile } from './services/api';
 
 function App() {
   const [path, setPath] = useState(window.location.pathname);
+  const [user, setUser] = useState(null);
+  const [fetchingUser, setFetchingUser] = useState(true);
   
   const token = localStorage.getItem('admin_token');
   
-  let user = null;
-  try {
-    const savedUser = localStorage.getItem('admin_user');
-    if (savedUser && savedUser !== 'undefined') {
-      user = JSON.parse(savedUser);
-    }
-  } catch (e) {
-    console.error("Failed to parse user from storage", e);
-    localStorage.removeItem('admin_user');
-  }
+  useEffect(() => {
+    const initUser = async () => {
+      if (!token) {
+        setFetchingUser(false);
+        return;
+      }
+
+      // Try local storage first
+      try {
+        const savedUser = localStorage.getItem('admin_user');
+        if (savedUser && savedUser !== 'undefined') {
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (e) {
+        console.error("Failed to parse user from storage", e);
+      }
+
+      // Always fetch fresh from server to be safe
+      try {
+        const freshUser = await getProfile();
+        setUser(freshUser);
+        localStorage.setItem('admin_user', JSON.stringify(freshUser));
+      } catch (e) {
+        if (e.response?.status === 401) {
+          logout();
+        }
+      } finally {
+        setFetchingUser(false);
+      }
+    };
+
+    initUser();
+  }, [token]);
   
   // Update state when URL changes (for browser back/forward)
   useEffect(() => {
@@ -45,6 +70,14 @@ function App() {
 
   if (path === '/register') {
     return <Register />;
+  }
+
+  if (fetchingUser) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   const navigate = (newPath) => {
@@ -70,7 +103,7 @@ function App() {
       case '/logs':
         return <LogsPage />;
       case '/settings':
-        return <SettingsPage />;
+        return <SettingsPage user={user} onUpdateUser={setUser} />;
       default:
         return <Dashboard />;
     }
