@@ -2,6 +2,7 @@ import express from "express";
 import { 
   getDashboardMetrics, 
   getUsers, 
+  getUserDetails,
   getCrisisReports,
   getLogs,
   deleteUser
