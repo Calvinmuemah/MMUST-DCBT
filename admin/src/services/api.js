@@ -61,6 +61,11 @@ export const getUsers = async () => {
   return response.data.data;
 };
 
+export const getUserDetails = async (id) => {
+  const response = await api.get(`/admin/users/${id}`);
+  return response.data.data;
+};
+
 export const getCrisisReports = async () => {
   const response = await api.get('/admin/crisis');
   return response.data.data;

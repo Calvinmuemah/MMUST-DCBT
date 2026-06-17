@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import UsersPage from './pages/Users';
+import UserDetails from './pages/UserDetails';
 import CrisisPage from './pages/Crisis';
 import SystemInsights from './pages/SystemInsights';
 import LogsPage from './pages/Logs';
@@ -35,12 +36,22 @@ function App() {
     return <Register />;
   }
 
+  const navigate = (newPath) => {
+    setPath(newPath);
+    window.history.pushState({}, '', newPath);
+  };
+
   const renderContent = () => {
+    if (path.startsWith('/users/')) {
+      const userId = path.split('/')[2];
+      return <UserDetails userId={userId} onBack={() => navigate('/users')} />;
+    }
+
     switch (path) {
       case '/':
         return <Dashboard />;
       case '/users':
-        return <UsersPage />;
+        return <UsersPage onView={(id) => navigate(`/users/${id}`)} />;
       case '/crisis':
         return <CrisisPage />;
       case '/insights':

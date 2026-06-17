@@ -67,3 +67,21 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const getUserDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await adminService.getUserFullProfile(id);
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

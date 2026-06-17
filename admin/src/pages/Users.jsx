@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getUsers } from '../services/api';
 import { User, UserMinus, ShieldCheck, Mail, Calendar, Search, Eye, UserCog, GraduationCap } from 'lucide-react';
 
-const UsersPage = () => {
+const UsersPage = ({ onView }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,9 +25,12 @@ const UsersPage = () => {
   }, []);
 
   const handleView = (user) => {
-    // For now, we can log or navigate to a profile view if it existed
-    console.log("Viewing user:", user);
-    alert(`Viewing details for ${user.name}. Detailed profile view is being implemented.`);
+    if (onView) {
+      onView(user.id);
+    } else {
+      console.log("Viewing user:", user);
+      alert(`Viewing details for ${user.name}. Detailed profile view is being implemented.`);
+    }
   };
 
   const filteredUsers = users.filter(u => {

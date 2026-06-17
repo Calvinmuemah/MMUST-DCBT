@@ -14,6 +14,7 @@ const router = express.Router();
 // For now, we protect it with the standard auth check.
 router.get("/metrics", protect, getDashboardMetrics);
 router.get("/users", protect, getUsers);
+router.get("/users/:id", protect, getUserDetails);
 router.get("/crisis", protect, getCrisisReports);
 router.get("/logs", protect, getLogs);
 router.delete("/users/:id", protect, deleteUser);

@@ -254,6 +254,82 @@ export const deleteUser = async (userId) => {
   return result.rowCount > 0;
 };
 
+export const getUserFullProfile = async (userId) => {
+  // 1. Basic User Info
+  const userResult = await pool.query(
+    `SELECT id, public_id, name, email, role, is_anonymous, 
+            onboarding_answers, onboarding_total_score, onboarding_risk_level, 
+            onboarding_completed, onboarding_completed_at, 
+            referral_reward_points, created_at
+     FROM users 
+     WHERE id = $1 OR public_id::text = $1`,
+    [userId]
+  );
+
+  if (userResult.rowCount === 0) return null;
+  const user = userResult.rows[0];
+  const realId = user.id;
+
+  // 2. Daily Assessments
+  const assessments = await pool.query(
+    `SELECT * FROM daily_assessments WHERE user_id = $1 ORDER BY assessment_date DESC`,
+    [realId]
+  );
+
+  // 3. Journal Entries
+  const journals = await pool.query(
+    `SELECT id, public_id, title, mood, insight, created_at 
+     FROM journal_entries WHERE user_id = $1 ORDER BY created_at DESC`,
+    [realId]
+  );
+
+  // 4. Chat Sessions
+  const chats = await pool.query(
+    `SELECT id, public_id, topic, created_at 
+     FROM chat_sessions WHERE user_id = $1 ORDER BY created_at DESC`,
+    [realId]
+  );
+
+  // 5. Reflections
+  const reflections = await pool.query(
+    `SELECT id, public_id, mood_rating, text, tags, created_at 
+     FROM reflections WHERE user_id = $1 ORDER BY created_at DESC`,
+    [realId]
+  );
+
+  // 6. Streak Logic for this user
+  const streakResult = await pool.query(`
+    WITH user_dates AS (
+      SELECT DISTINCT assessment_date FROM daily_assessments WHERE user_id = $1
+    ),
+    user_groups AS (
+      SELECT 
+        assessment_date,
+        assessment_date - (ROW_NUMBER() OVER (ORDER BY assessment_date))::int as grp
+      FROM user_dates
+    ),
+    streaks AS (
+      SELECT COUNT(*) as length FROM user_groups GROUP BY grp
+    )
+    SELECT COALESCE(MAX(length), 0) as max_streak FROM streaks
+  `, [realId]);
+
+  return {
+    ...user,
+    assessments: assessments.rows,
+    journals: journals.rows,
+    chats: chats.rows,
+    reflections: reflections.rows,
+    stats: {
+      total_assessments: assessments.rowCount,
+      total_journals: journals.rowCount,
+      total_chats: chats.rowCount,
+      total_reflections: reflections.rowCount,
+      max_streak: streakResult.rows[0]?.max_streak || 0
+    }
+  };
+};
+
 export const createLog = async (level, category, message, metadata = {}) => {
   try {
     await pool.query(
