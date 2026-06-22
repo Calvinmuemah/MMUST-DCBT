@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getUserDetails } from '../services/api';
+import { getUserDetails, getChatMessages } from '../services/api';
 import { 
   ArrowLeft, 
   Mail, 
@@ -11,13 +11,43 @@ import {
   Brain,
   Zap,
   Clock,
-  User as UserIcon
+  User as UserIcon,
+  Eye,
+  X
 } from 'lucide-react';
 
 const UserDetails = ({ userId, onBack }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Chat conversation modal states
+  const [activeChatSession, setActiveChatSession] = useState(null);
+  const [chatMessages, setChatMessages] = useState(null);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState(null);
+
+  const handleViewChat = async (chatSession) => {
+    setActiveChatSession(chatSession);
+    setChatLoading(true);
+    setChatError(null);
+    setChatMessages([]);
+    try {
+      const data = await getChatMessages(chatSession.public_id || chatSession.id);
+      setChatMessages(data.messages || []);
+    } catch (err) {
+      console.error(err);
+      setChatError("Failed to load chat conversation messages.");
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleCloseChatModal = () => {
+    setActiveChatSession(null);
+    setChatMessages(null);
+  };
+
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -203,14 +233,25 @@ const UserDetails = ({ userId, onBack }) => {
               </h3>
               <div className="space-y-4">
                 {chats.slice(0, 5).map((c, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                  <div 
+                    key={i} 
+                    onClick={() => handleViewChat(c)}
+                    className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between hover:bg-slate-100/80 hover:border-slate-200 cursor-pointer transition-all group/item animate-in fade-in duration-300"
+                  >
                     <div>
-                      <div className="font-bold text-slate-800 text-sm capitalize">{c.topic}</div>
+                      <div className="font-bold text-slate-800 text-sm capitalize group-hover/item:text-primary transition-colors">{c.topic}</div>
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
                         {new Date(c.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <ArrowLeft className="text-slate-200 rotate-180" size={16} />
+                    <div className="flex items-center gap-2">
+                      <span className="opacity-0 group-hover/item:opacity-100 transition-opacity text-xs font-bold text-primary flex items-center gap-1">
+                        View details
+                      </span>
+                      <div className="p-2 bg-white rounded-xl shadow-sm text-slate-400 group-hover/item:text-primary group-hover/item:bg-primary/5 transition-all">
+                        <Eye size={16} />
+                      </div>
+                    </div>
                   </div>
                 ))}
                 {chats.length === 0 && <p className="text-center py-8 text-slate-400 italic text-sm">No chat sessions</p>}
@@ -219,6 +260,101 @@ const UserDetails = ({ userId, onBack }) => {
           </div>
         </div>
       </div>
+
+      {/* Chat Conversation Modal */}
+      {activeChatSession && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white">
+              <div>
+                <h4 className="font-bold text-slate-800 text-lg capitalize flex items-center gap-2">
+                  <MessageSquare className="text-primary" size={20} />
+                  {activeChatSession.topic}
+                </h4>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
+                  Session date: {new Date(activeChatSession.created_at).toLocaleString()}
+                </p>
+              </div>
+              <button 
+                onClick={handleCloseChatModal}
+                className="p-2.5 hover:bg-slate-100 rounded-2xl text-slate-400 hover:text-slate-600 transition-all border border-transparent hover:border-slate-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50 min-h-[300px] max-h-[55vh] flex flex-col justify-start">
+              {chatLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3 my-auto">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-primary"></div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Loading messages...</p>
+                </div>
+              ) : chatError ? (
+                <div className="bg-red-50 border border-red-100 text-red-600 p-6 rounded-2xl text-center my-auto space-y-3">
+                  <p className="font-bold text-sm">{chatError}</p>
+                  <button 
+                    onClick={() => handleViewChat(activeChatSession)}
+                    className="px-4 py-2 bg-white border border-red-200 hover:bg-red-50 text-red-600 font-bold text-xs rounded-xl shadow-sm transition-all"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : chatMessages && chatMessages.length > 0 ? (
+                <div className="space-y-4">
+                  {chatMessages.map((msg, index) => {
+                    const isAi = msg.sender === 'ai';
+                    return (
+                      <div 
+                        key={index} 
+                        className={`flex items-start gap-3 ${isAi ? 'justify-start' : 'justify-end'}`}
+                      >
+                        {isAi && (
+                          <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-sm font-bold text-xs">
+                            AI
+                          </div>
+                        )}
+                        <div className={`flex flex-col ${isAi ? 'items-start' : 'items-end'} max-w-[80%]`}>
+                          <div className={`p-4 rounded-2xl shadow-sm text-sm font-medium leading-relaxed ${
+                            isAi 
+                              ? 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm' 
+                              : 'bg-primary text-white rounded-tr-sm'
+                          }`}>
+                            {msg.message}
+                          </div>
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1.5 px-1">
+                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        {!isAi && (
+                          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-sm font-bold text-xs">
+                            U
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-20 text-slate-400 italic text-sm my-auto">
+                  No messages found in this session.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-slate-100 bg-white flex justify-end">
+              <button 
+                onClick={handleCloseChatModal}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 font-bold text-sm rounded-2xl transition-all border border-slate-200/50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

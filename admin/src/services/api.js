@@ -71,6 +71,12 @@ export const getUserDetails = async (id) => {
   return response.data.data;
 };
 
+export const getChatMessages = async (sessionId) => {
+  const response = await api.get(`/admin/chats/${sessionId}`);
+  return response.data.data;
+};
+
+
 export const getCrisisReports = async () => {
   const response = await api.get('/admin/crisis');
   return response.data.data;
