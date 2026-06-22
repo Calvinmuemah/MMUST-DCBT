@@ -87,3 +87,25 @@ export const getUserDetails = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const getChatMessages = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const sessionData = await adminService.getChatSessionMessages(sessionId);
+    
+    if (!sessionData) {
+      return res.status(404).json({ success: false, message: "Chat session not found" });
+    }
+
+    await adminService.createLog('info', 'analytics', 'Admin viewed chat history details', { adminId: req.user.id, sessionId });
+
+    res.json({
+      success: true,
+      data: sessionData
+    });
+  } catch (err) {
+    console.error("getChatMessages error:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+

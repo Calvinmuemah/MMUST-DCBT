@@ -5,7 +5,8 @@ import {
   getUserDetails,
   getCrisisReports,
   getLogs,
-  deleteUser
+  deleteUser,
+  getChatMessages
 } from "../controllers/admin.controller.js";
 import { protect } from "../middleware/auth.middleware.js";
 
@@ -18,6 +19,7 @@ router.get("/users", protect, getUsers);
 router.get("/users/:id", protect, getUserDetails);
 router.get("/crisis", protect, getCrisisReports);
 router.get("/logs", protect, getLogs);
+router.get("/chats/:sessionId", protect, getChatMessages);
 router.delete("/users/:id", protect, deleteUser);
 
 export default router;

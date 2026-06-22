@@ -1,4 +1,5 @@
 import { pool } from "../config/db.js";
+import { resolveSessionId } from "../utils/ids.js";
 
 export const getDashboardStats = async (range = '7d') => {
   const stats = {
@@ -341,4 +342,29 @@ export const createLog = async (level, category, message, metadata = {}) => {
   } catch (err) {
     console.error("createLog error:", err.message);
   }
+};
+
+export const getChatSessionMessages = async (sessionIdentifier) => {
+  const resolvedId = await resolveSessionId(sessionIdentifier);
+  if (!resolvedId) return null;
+
+  // Verify that the session exists
+  const sessionCheck = await pool.query(
+    `SELECT id, topic, created_at FROM chat_sessions WHERE id = $1`,
+    [resolvedId]
+  );
+  if (sessionCheck.rowCount === 0) return null;
+
+  const messagesResult = await pool.query(
+    `SELECT sender, message, created_at 
+     FROM chat_messages 
+     WHERE session_id = $1 
+     ORDER BY created_at ASC`,
+    [resolvedId]
+  );
+
+  return {
+    session: sessionCheck.rows[0],
+    messages: messagesResult.rows
+  };
 };
