@@ -112,22 +112,26 @@ function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 h-16 flex items-center px-8 sticky top-0 z-20 justify-between">
+      <header className="bg-white border-b border-slate-200 h-16 flex items-center px-8 sticky top-0 z-20 justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl">
-            M
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-text-dark">MMUSTCare <span className="text-primary">Admin</span></h1>
+          <h1 className="text-xl font-black tracking-tight text-slate-800 flex items-center gap-2">
+            <span className="bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent">MMUSTCare</span> 
+            <span className="text-slate-300 font-light">|</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 bg-slate-100 px-3 py-1 rounded-xl border border-slate-200/60 shadow-sm">Admin</span>
+          </h1>
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 text-right">
-            <div>
-              <p className="text-sm font-bold text-text-dark">{user?.name}</p>
-              <p className="text-xs text-text-light capitalize">{user?.role}</p>
+          <div className="flex items-center gap-3 text-left">
+            <div className="relative">
+              <div className="w-10 h-10 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center text-primary font-black uppercase shadow-sm">
+                {user?.name?.[0]}
+              </div>
+              <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white animate-pulse" />
             </div>
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold uppercase">
-              {user?.name?.[0]}
+            <div>
+              <p className="text-sm font-bold text-slate-800 leading-tight">{user?.name}</p>
+              <p className="text-xs text-slate-400 font-medium capitalize mt-0.5">{user?.role}</p>
             </div>
           </div>
         </div>
