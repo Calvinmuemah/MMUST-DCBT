@@ -238,138 +238,137 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      extendBodyBehindAppBar: true,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 60),
-
-              /// ================= HEADER =================
-              const Text(
-                "Welcome to",
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
+      body: Stack(
+        children: [
+          // Vibrant Colorful Background
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF6366F1), // Indigo
+                  Color(0xFF3B82F6), // Blue
+                  Color(0xFF2DD4BF), // Teal
+                ],
               ),
-              const SizedBox(height: 4),
-              const Text(
-                "MMUSTCare",
-                style: TextStyle(
-                  fontSize: 42,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                  letterSpacing: -1,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                "A safe space for your mental health. We're here to support your journey towards emotional balance and academic success.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                  height: 1.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+            ),
+          ),
+          
+          // Decorative Abstract Shapes
+          Positioned(
+            top: -50,
+            left: -50,
+            child: _circleDecoration(300, Colors.white.withOpacity(0.1)),
+          ),
+          Positioned(
+            bottom: 150,
+            right: -80,
+            child: _circleDecoration(250, Colors.white.withOpacity(0.1)),
+          ),
 
-              const SizedBox(height: 40),
-
-              /// ================= CONTENT =================
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      _buildWelcomeSection(
-                        icon: Icons.favorite_rounded,
-                        title: "Compassionate Support",
-                        description: "Get immediate help with stress, anxiety, and academic pressure through guided CBT tools.",
-                        color: Colors.pinkAccent.shade100,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildWelcomeSection(
-                        icon: Icons.security_rounded,
-                        title: "Safe & Private",
-                        description: "Your privacy is our priority. Your data is encrypted and secure at every step of your journey.",
-                        color: Colors.blueAccent.shade100,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildWelcomeSection(
-                        icon: Icons.auto_awesome_rounded,
-                        title: "AI Companion",
-                        description: "Interact with our AI support to reflect on your thoughts and discover healthier ways of thinking.",
-                        color: Colors.purpleAccent.shade100,
-                      ),
-                      const SizedBox(height: 30),
-                    ],
-                  ),
-                ),
-              ),
-
-              /// ================= ACTIONS =================
-              Column(
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 58,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        "Get Started",
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-                      ),
+                  const Spacer(flex: 3),
+
+                  // Hero Text
+                  const Text(
+                    "MMUSTCare",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1.5,
+                      height: 1.1,
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 58,
-                    child: OutlinedButton(
-                      onPressed: _loading ? null : _handleAnonymousLogin,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: _loading 
-                        ? const SizedBox(
-                            width: 20, 
-                            height: 20, 
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)
-                          )
-                        : const Text(
-                            "Continue as Guest",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
+
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    "Empowering your mental journey with AI-driven CBT support.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  const Spacer(flex: 2),
+
+                  // Action Buttons
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 65,
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF0F172A),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
                             ),
                           ),
-                    ),
+                          child: const Text(
+                            "Get Started",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: OutlinedButton(
+                          onPressed: _loading ? null : _handleAnonymousLogin,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.white, width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: _loading 
+                            ? const SizedBox(
+                                width: 20, 
+                                height: 20, 
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                              )
+                            : const Text(
+                                "Continue as Guest",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
+
+                  const SizedBox(height: 32),
+
+                  // Already have account
                   TextButton(
                     onPressed: _loading ? null : () {
                       Navigator.push(
@@ -377,80 +376,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
                       );
                     },
-                    child: RichText(
-                      text: const TextSpan(
-                        text: "Already have an account? ",
-                        style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
-                        children: [
-                          TextSpan(
-                            text: "Login",
-                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800),
-                          ),
-                        ],
+                    child: Text(
+                      "Already have an account? Login",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+
+                  const Spacer(flex: 3),
+
+                  // Subtle Security & Privacy Info
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.lock_outline_rounded, color: Colors.white.withOpacity(0.6), size: 14),
+                      const SizedBox(width: 8),
+                      Text(
+                        "SECURE • PRIVATE • ENCRYPTED",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 20),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildWelcomeSection({
-    required IconData icon,
-    required String title,
-    required String description,
-    required Color color,
-  }) {
+  Widget _circleDecoration(double size, Color color) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: color.withOpacity(0.8), size: 28),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                    height: 1.4,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        shape: BoxShape.circle,
+        color: color,
       ),
     );
   }
