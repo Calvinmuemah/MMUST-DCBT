@@ -26,6 +26,7 @@ export default function App() {
 
           {/* ONBOARDING (after login) */}
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/assessment" element={<Onboarding />} />
 
           {/* PROTECTED ROUTES */}
           <Route element={<ProtectedLayout />}>

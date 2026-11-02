@@ -137,7 +137,7 @@ export default function Onboarding() {
               </div>
               <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight">Your Mind,<br/>Well Cared For.</h1>
               <p className="text-blue-100 text-lg leading-relaxed mb-8 font-medium">
-                Personalize your journey with MMUSTCare. A small step today leads to a stronger tomorrow.
+                Personalize your journey with MMUST DCBT. A small step today leads to a stronger tomorrow.
               </p>
               <div className="flex items-center gap-3 text-sm font-bold text-blue-100/80 bg-white/10 w-fit px-4 py-2 rounded-full border border-white/10">
                 <Lock size={14} /> Encrypted & 100% Private

@@ -18,8 +18,8 @@ export default defineConfig({
       },
 
       manifest: {
-        name: "MMUST Mental Wellness",
-        short_name: "MMUSTCare",
+        name: "MMUST DCBT",
+        short_name: "MMUSTDCBT",
         description: "Digital CBT Mental Wellness Platform",
 
         theme_color: "#0f172a",

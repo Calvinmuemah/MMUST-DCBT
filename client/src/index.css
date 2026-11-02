@@ -24,7 +24,49 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    @apply bg-background text-slate-900;
+    @apply bg-white text-slate-900 antialiased selection:bg-blue-600 selection:text-white;
+  }
+}
+
+@keyframes phone-hang {
+  0%, 100% {
+    transform: perspective(1200px) rotateX(5deg) rotateY(-8deg) rotateZ(-10deg) translateY(0px);
+  }
+  50% {
+    transform: perspective(1200px) rotateX(3deg) rotateY(-6deg) rotateZ(-8deg) translateY(-14px);
+  }
+}
+
+@keyframes shadow-hang {
+  0%, 100% {
+    transform: scale(1) rotate(-10deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(0.85) rotate(-10deg);
+    opacity: 0.18;
+  }
+}
+
+.animate-phone-hang {
+  transform: perspective(1200px) rotateX(5deg) rotateY(-8deg) rotateZ(-10deg);
+  animation: phone-hang 6s ease-in-out infinite;
+}
+
+.animate-shadow-hang {
+  animation: shadow-hang 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-phone-hang {
+    animation: none;
+    transform: perspective(1200px) rotateX(5deg) rotateY(-8deg) rotateZ(-10deg);
+  }
+  .animate-shadow-hang {
+    animation: none;
   }
 }

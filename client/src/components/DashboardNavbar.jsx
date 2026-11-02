@@ -15,12 +15,8 @@ export default function DashboardNavbar() {
 
       {/* LEFT */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-600 to-teal-500 flex items-center justify-center text-white font-bold">
-          M
-        </div>
-
         <div>
-          <h1 className="font-bold text-slate-900">MMUSTCare</h1>
+          <h1 className="font-bold text-slate-900">MMUST DCBT</h1>
           <p className="text-xs text-slate-500">CBT Dashboard</p>
         </div>
       </div>

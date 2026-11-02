@@ -97,7 +97,7 @@ export default function Dashboard() {
               className="w-full md:w-auto px-10 py-4 rounded-2xl bg-slate-900 text-white font-black shadow-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
             >
               <Bot size={20} />
-              {loadingMood ? "Initializing..." : "Talk to MMUSTCare AI"}
+              {loadingMood ? "Initializing..." : "Talk to MMUST DCBT AI"}
             </button>
           </div>
 
