@@ -8,18 +8,19 @@ import {
   deleteUser,
   getChatMessages
 } from "../controllers/admin.controller.js";
-import { protect } from "../middleware/auth.middleware.js";
+import { protect, isAdmin } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// NOTE: In a real production app, we would add an isAdmin middleware check here.
-// For now, we protect it with the standard auth check.
-router.get("/metrics", protect, getDashboardMetrics);
-router.get("/users", protect, getUsers);
-router.get("/users/:id", protect, getUserDetails);
-router.get("/crisis", protect, getCrisisReports);
-router.get("/logs", protect, getLogs);
-router.get("/chats/:sessionId", protect, getChatMessages);
-router.delete("/users/:id", protect, deleteUser);
+// Enforce authentication AND administrator role on all admin routes
+router.use(protect, isAdmin);
+
+router.get("/metrics", getDashboardMetrics);
+router.get("/users", getUsers);
+router.get("/users/:id", getUserDetails);
+router.get("/crisis", getCrisisReports);
+router.get("/logs", getLogs);
+router.get("/chats/:sessionId", getChatMessages);
+router.delete("/users/:id", deleteUser);
 
 export default router;

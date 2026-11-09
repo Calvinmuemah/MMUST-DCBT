@@ -4,7 +4,10 @@ import { pool } from "../config/db.js";
 const NAMESPACE_BASE = uuidv5.DNS;
 
 export const getNamespace = () => {
-  const secret = process.env.JWT_SECRET || "default_secret";
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.trim() === "") {
+    throw new Error("Critical Configuration Error: JWT_SECRET environment variable is missing.");
+  }
   return uuidv5(secret, NAMESPACE_BASE);
 };
 
@@ -25,7 +28,11 @@ export const ensureUserPublicId = async (userId, email) => {
 
     return publicId;
   } catch (error) {
-    console.error("ensureUserPublicId error:", error.message);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("ensureUserPublicId error:", error.message);
+    } else {
+      console.error("[ERROR] [IdGenerationError] Failed to ensure user public ID.");
+    }
     return null;
   }
 };
@@ -43,7 +50,11 @@ export const ensureSessionPublicId = async (sessionId, userId, topic) => {
 
     return publicId;
   } catch (error) {
-    console.error("ensureSessionPublicId error:", error.message);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("ensureSessionPublicId error:", error.message);
+    } else {
+      console.error("[ERROR] [IdGenerationError] Failed to ensure session public ID.");
+    }
     return null;
   }
 };

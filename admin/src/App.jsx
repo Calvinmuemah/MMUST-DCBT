@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import UsersPage from './pages/Users';
 import UserDetails from './pages/UserDetails';
 import CrisisPage from './pages/Crisis';
@@ -60,16 +59,8 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  if (!token && path !== '/register') {
+  if (!token || path === '/login') {
     return <Login />;
-  }
-
-  if (path === '/login') {
-    return <Login />;
-  }
-
-  if (path === '/register') {
-    return <Register />;
   }
 
   if (fetchingUser) {

@@ -109,13 +109,18 @@ const getTopicFocus = (topic = "general") => {
 // ===============================
 
 const getSessionMemory = async (sessionId) => {
+  // Fetch the most recent 15 messages and order chronologically for prompt context
   const result = await pool.query(
     `
     SELECT sender, message
-    FROM chat_messages
-    WHERE session_id = $1
+    FROM (
+      SELECT sender, message, created_at
+      FROM chat_messages
+      WHERE session_id = $1
+      ORDER BY created_at DESC
+      LIMIT 15
+    ) recent_chat
     ORDER BY created_at ASC
-    LIMIT 10
     `,
     [sessionId]
   );
@@ -168,7 +173,11 @@ Rules:
       "What has been on your mind lately regarding this?"
     );
   } catch (error) {
-    console.log("STARTER ERROR:", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("STARTER ERROR:", error);
+    } else {
+      console.error("[GEMINI ERROR]: Starter generation failed with code:", error?.status || error?.code || "unknown");
+    }
 
     return "What has been on your mind lately regarding this?";
   }
@@ -190,6 +199,9 @@ export const generateResponse = async (
     const userName = userId ? await getUserDisplayName(userId) : null;
     let memory = "";
 
+    // Security & Quality: Cap message input length to 1,000 characters
+    const sanitizedMessage = typeof message === "string" ? message.trim().slice(0, 1000) : "";
+
     if (sessionId) {
       const history = await getSessionMemory(sessionId);
       memory = formatMemory(history);
@@ -208,7 +220,7 @@ Conversation Memory:
 ${memory || "No previous conversation"}
 
 User Message:
-"${message}"
+"${sanitizedMessage}"
 
 IMPORTANT BEHAVIOR:
 - Stay strictly in CBT emotional support mode
@@ -237,7 +249,11 @@ IMPORTANT BEHAVIOR:
       language,
     };
   } catch (error) {
-    console.log("GEMINI ERROR:", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("GEMINI ERROR:", error);
+    } else {
+      console.error("[GEMINI ERROR]: AI response generation failed with code:", error?.status || error?.code || "unknown");
+    }
 
     return {
       reply: "What you're feeling matters. Can you tell me more about it?",

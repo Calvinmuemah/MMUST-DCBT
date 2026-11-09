@@ -71,8 +71,10 @@ export const startSession = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("START SESSION ERROR:", error);
-    await createLog('error', 'analytics', `Start chat session error: ${error.message}`, { path: '/chat/session/start' });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("START SESSION ERROR:", error);
+    }
+    await createLog('error', 'analytics', 'Start chat session error', { path: '/chat/session/start' });
 
     return res.status(500).json({
       message: "Server error"
@@ -103,7 +105,7 @@ export const chat = async (req, res) => {
     if (detectCrisis(message)) {
       const name = await getUserDisplayName(userId);
 
-      await createLog('warn', 'analytics', 'Crisis detected in chat', { userId, message });
+      await createLog('warn', 'analytics', 'Crisis detected in chat', { userId, crisisDetected: true });
 
       return res.json({
         emergency: true,
@@ -191,8 +193,10 @@ export const chat = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("CHAT ERROR:", error);
-    await createLog('error', 'analytics', `Chat error: ${error.message}`, { path: '/chat' });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("CHAT ERROR:", error);
+    }
+    await createLog('error', 'analytics', 'Chat processing error', { path: '/chat' });
 
     return res.status(500).json({
       message: "Server error"
@@ -243,8 +247,10 @@ export const getSessionMessages = async (req, res) => {
     return res.json(result.rows);
 
   } catch (error) {
-    console.log("GET HISTORY ERROR:", error);
-    await createLog('error', 'analytics', `Get chat history error: ${error.message}`, { path: '/chat/:sessionId' });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("GET HISTORY ERROR:", error);
+    }
+    await createLog('error', 'analytics', 'Get chat history error', { path: '/chat/:sessionId' });
 
     return res.status(500).json({
       message: "Error fetching history"

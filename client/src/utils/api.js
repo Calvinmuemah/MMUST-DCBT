@@ -1,5 +1,4 @@
-// const BASE_URL = "http://localhost:5000/api/v1";
-const BASE_URL = "https://mmust-dcbt-api.vercel.app/api/v1";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 export const getRequest = async (url) => {
   const token = localStorage.getItem("token");

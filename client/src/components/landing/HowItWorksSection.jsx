@@ -35,96 +35,66 @@ export default function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="relative px-3 sm:px-6 py-16 sm:py-24 md:py-32 bg-white border-t border-slate-200/80 overflow-hidden">
+    <section id="how-it-works" className="relative px-3 sm:px-6 py-20 md:py-28 bg-[#090D16] border-t border-slate-800/80 overflow-hidden">
+      {/* Subtle ambient lighting */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-blue-600/5 blur-[130px] rounded-full pointer-events-none" />
+
       <div className="w-full relative z-10">
         
-        {/* Section Heading (Screenshot 3 style) */}
-        <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-20 md:mb-28 space-y-3 sm:space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            Clinical Protocol
-          </div>
+        {/* Section Heading */}
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-400">
+            How it works
+          </p>
 
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
             How does it work?
           </h2>
 
-          <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed max-w-xl mx-auto">
-            A simple, evidence-based 3-step therapeutic pathway designed to guide students from acute stress to psychological stability.
+          <p className="text-sm sm:text-base md:text-lg text-slate-400 leading-relaxed max-w-xl mx-auto">
+            A straightforward, confidential 3-step pathway to help students manage stress, negative thoughts, and emotional strain.
           </p>
         </div>
 
-        {/* 3 STEPS CONNECTED BY CURVED DASHED LINE (Screenshot 3 Recreation) */}
-        <div className="relative max-w-6xl mx-auto">
-          
-          {/* SVG DOTTED CURVED LINE (Visible on Desktop) */}
-          <div className="hidden md:block absolute top-7 left-1/6 right-1/6 w-2/3 h-12 mx-auto pointer-events-none z-0">
-            <svg 
-              className="w-full h-full overflow-visible" 
-              viewBox="0 0 800 60" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
+        {/* 3 STEPS CARDS */}
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          {steps.map((item, i) => (
+            <div 
+              key={i} 
+              className="p-6 sm:p-8 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition-colors flex flex-col justify-between"
             >
-              <path
-                d="M 50 30 C 200 -10, 250 70, 400 30 C 550 -10, 600 70, 750 30"
-                stroke="rgba(37, 99, 235, 0.4)"
-                strokeWidth="2.5"
-                strokeDasharray="6 6"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-
-          {/* Steps Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 relative z-10">
-            {steps.map((item, i) => (
-              <div 
-                key={i} 
-                className="flex flex-col items-center text-center space-y-4 sm:space-y-5 group"
-              >
-                {/* Circular Numbered Badge (Screenshot 3 style) */}
-                <div className="relative">
-                  <div className="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-white border-2 border-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center text-blue-600 font-black text-lg sm:text-xl shadow-lg shadow-blue-500/10 group-hover:scale-110 transition-all duration-300">
-                    <span className="group-hover:text-white transition-colors">
-                      {item.step}
-                    </span>
-                  </div>
-                  
-                  {/* Icon Indicator Pill */}
-                  <div className="absolute -bottom-1.5 -right-1.5 w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shadow-md">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-blue-950/80 border border-blue-800/60 flex items-center justify-center text-blue-400">
                     {item.icon}
                   </div>
+                  <span className="text-xs font-bold text-slate-500 font-mono">
+                    0{item.step}
+                  </span>
                 </div>
 
-                {/* Content */}
-                <div className="space-y-1.5 max-w-xs px-2">
-                  <div className="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold uppercase tracking-widest text-slate-600">
-                    {item.badge}
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
-                    {item.subtitle}
-                  </p>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
-                    {item.desc}
-                  </p>
-                </div>
+                <h3 className="text-lg font-bold text-white mb-1">
+                  {item.title}
+                </h3>
+                <p className="text-xs font-medium text-blue-400 mb-3">
+                  {item.subtitle}
+                </p>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-normal">
+                  {item.desc}
+                </p>
               </div>
-            ))}
-          </div>
-
+            </div>
+          ))}
         </div>
 
-        {/* Bottom CTA bar */}
-        <div className="mt-14 sm:mt-20 text-center">
+        {/* Bottom CTA */}
+        <div className="mt-12 text-center">
           <a
             href="#download"
-            className="inline-flex items-center gap-2.5 px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-xl shadow-blue-600/25 hover:shadow-blue-600/35 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors"
           >
             <Download className="w-4 h-4" />
-            <span>Download APK & Start Your Journey</span>
+            <span>Download the Android App</span>
           </a>
         </div>
 

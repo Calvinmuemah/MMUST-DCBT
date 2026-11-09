@@ -30,7 +30,7 @@ export default function Navbar() {
             <a
               key={link.label}
               href={link.href}
-              className="hover:text-blue-600 hover:-translate-y-0.5 transition-all duration-200"
+              className="hover:text-blue-600 transition-colors"
             >
               {link.label}
             </a>
@@ -42,7 +42,7 @@ export default function Navbar() {
           {/* Download APK Button */}
           <a
             href="#download"
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-600/25 hover:shadow-blue-600/35 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download APK</span>
@@ -53,7 +53,7 @@ export default function Navbar() {
         <div className="lg:hidden flex items-center gap-1.5">
           <a
             href="#download"
-            className="flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-md bg-blue-600 text-white font-bold shadow-sm"
+            className="flex items-center gap-1 text-[11px] px-2.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
           >
             <Download className="w-3 h-3" />
             <span>APK</span>
@@ -61,7 +61,7 @@ export default function Navbar() {
           
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900"
+            className="p-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 transition-colors"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
@@ -91,7 +91,7 @@ export default function Navbar() {
               href="/app-release.apk"
               download="MMUSTDCBT.apk"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-blue-600 text-white text-xs font-bold shadow-sm shadow-blue-500/20"
+              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Android APK (v1.0)</span>

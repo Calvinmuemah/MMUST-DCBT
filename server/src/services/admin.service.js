@@ -29,6 +29,15 @@ export const getDashboardStats = async (range = '7d') => {
   // Helper to check if a table exists error
   const isTableMissing = (err) => err?.code === '42P01';
 
+  // Sanitized logging helper: never leaks raw SQL error messages or table details in production
+  const logDbError = (category, err) => {
+    if (process.env.NODE_ENV !== "production") {
+      console.error(`Dashboard error (${category}):`, err?.message || err);
+    } else {
+      console.error(`[ADMIN-ANALYTICS] Query failed for [${category}] with code: ${err?.code || 'unknown_code'}`);
+    }
+  };
+
   // 1. User Overview
   try {
     const userResult = await pool.query(`
@@ -42,7 +51,7 @@ export const getDashboardStats = async (range = '7d') => {
     `);
     stats.users = userResult.rows[0];
   } catch (err) {
-    console.error("Dashboard error (users):", err.message);
+    logDbError("users", err);
   }
 
   // 2. Risk Level Distribution
@@ -58,7 +67,7 @@ export const getDashboardStats = async (range = '7d') => {
     `);
     stats.riskDistribution = riskResult.rows;
   } catch (err) {
-    console.error("Dashboard error (risk):", err.message);
+    logDbError("risk", err);
   }
 
   // 3. Chat Engagement
@@ -79,7 +88,7 @@ export const getDashboardStats = async (range = '7d') => {
       topTopics: topicResult.rows
     };
   } catch (err) {
-    if (!isTableMissing(err)) console.error("Dashboard error (chats):", err.message);
+    if (!isTableMissing(err)) logDbError("chats", err);
   }
 
   // 4. Daily Assessment Trends
@@ -96,7 +105,7 @@ export const getDashboardStats = async (range = '7d') => {
     `);
     stats.assessmentTrends = assessmentTrend.rows;
   } catch (err) {
-    if (!isTableMissing(err)) console.error("Dashboard error (assessment trends):", err.message);
+    if (!isTableMissing(err)) logDbError("assessment trends", err);
   }
 
   // 5. Main Challenges Breakdown
@@ -113,7 +122,7 @@ export const getDashboardStats = async (range = '7d') => {
     `);
     stats.topChallenges = challengeResult.rows;
   } catch (err) {
-    if (!isTableMissing(err)) console.error("Dashboard error (challenges):", err.message);
+    if (!isTableMissing(err)) logDbError("challenges", err);
   }
 
   // 6. System Health (Table Counts)
@@ -149,7 +158,7 @@ export const getDashboardStats = async (range = '7d') => {
     `);
     stats.activityHeatmap = heatmapResult.rows;
   } catch (err) {
-    if (!isTableMissing(err)) console.error("Dashboard error (heatmap):", err.message);
+    if (!isTableMissing(err)) logDbError("heatmap", err);
   }
 
   // 8. Streak Statistics
@@ -180,7 +189,7 @@ export const getDashboardStats = async (range = '7d') => {
       avg_streak: streakStats.rows[0]?.avg_streak || 0
     };
   } catch (err) {
-    if (!isTableMissing(err)) console.error("Dashboard error (streaks):", err.message);
+    if (!isTableMissing(err)) logDbError("streaks", err);
   }
 
   // 9. Referral Conversion
@@ -199,7 +208,7 @@ export const getDashboardStats = async (range = '7d') => {
       percentage: total > 0 ? Math.round((referred / total) * 100) : 0
     };
   } catch (err) {
-    console.error("Dashboard error (referrals):", err.message);
+    logDbError("referrals", err);
   }
 
   return stats;
@@ -335,12 +344,21 @@ export const getUserFullProfile = async (userId) => {
 
 export const createLog = async (level, category, message, metadata = {}) => {
   try {
+    const safeMetadata = { ...metadata };
+    const sensitiveFields = ['password', 'token', 'otp', 'newPassword', 'message', 'entry', 'notes', 'reflection'];
+    for (const key of Object.keys(safeMetadata)) {
+      if (sensitiveFields.includes(key)) {
+        safeMetadata[key] = '[REDACTED]';
+      }
+    }
     await pool.query(
       `INSERT INTO system_logs (level, category, message, metadata) VALUES ($1, $2, $3, $4)`,
-      [level, category, message, JSON.stringify(metadata)]
+      [level, category, message, JSON.stringify(safeMetadata)]
     );
   } catch (err) {
-    console.error("createLog error:", err.message);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("createLog error:", err.message);
+    }
   }
 };
 

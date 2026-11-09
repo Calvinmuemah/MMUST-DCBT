@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://mmust-dcbt-api.vercel.app/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
 });
 
 api.interceptors.request.use((config) => {
@@ -32,20 +32,6 @@ export const login = async (email, password) => {
     throw new Error('Access denied. Admin privileges required.');
   }
 
-  localStorage.setItem('admin_token', token);
-  localStorage.setItem('admin_user', JSON.stringify(user));
-  return response.data;
-};
-
-export const register = async (name, email, password) => {
-  const response = await api.post('/auth/register', { 
-    name, 
-    email, 
-    password, 
-    role: 'admin' 
-  });
-  const { token, user } = response.data;
-  
   localStorage.setItem('admin_token', token);
   localStorage.setItem('admin_user', JSON.stringify(user));
   return response.data;

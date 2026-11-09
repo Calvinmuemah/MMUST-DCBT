@@ -106,7 +106,10 @@ const recordLoginEvent = async (userId) => {
 // REGISTER (AUTH ONLY)
 // =======================
 export const registerUser = async (data) => {
-  const { name, email, password, referralCode: incomingReferralCode, role = 'student' } = data;
+  // Security Hardening: Public registration is strictly restricted to 'student'.
+  // Admin role escalation via request body payload injection is explicitly blocked.
+  const role = 'student';
+  const { name, email, password, referralCode: incomingReferralCode } = data;
 
   const userExists = await getUserByEmail(email);
 
@@ -139,7 +142,7 @@ export const registerUser = async (data) => {
 
   const freshUser = await getUserById(created.id);
 
-  await createLog('info', 'auth', `New user registered: ${email} (${role})`, { userId: created.id, role });
+  await createLog('info', 'auth', `New user registered (${role})`, { userId: created.id, role });
 
   const token = generateToken({
     id: created.id,
@@ -179,7 +182,7 @@ export const registerAnonymousUser = async (data) => {
   const freshUser = await getUserById(created.id);
 
   await recordLoginEvent(created.id);
-  await createLog('info', 'auth', `Guest session started: ${name}`, { userId: created.id });
+  await createLog('info', 'auth', 'Guest session started', { userId: created.id });
 
   const token = generateToken({
     id: created.id,
@@ -230,7 +233,7 @@ export const loginUser = async (data) => {
   });
 
   await recordLoginEvent(user.id);
-  await createLog('info', 'auth', `User logged in: ${user.email || 'Anonymous'}`, { userId: user.id, role: user.role });
+  await createLog('info', 'auth', 'User logged in', { userId: user.id, role: user.role });
 
   return {
     user: toUserResponse({
@@ -656,7 +659,11 @@ export const requestPasswordReset = async (email) => {
   const emailSent = await sendOTPEmail(email, otp);
 
   if (!emailSent) {
-    console.log(`[AUTH] Failed to send email to ${email}. Logging OTP to console: ${otp}`);
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[AUTH-DEV] SMTP dispatch skipped/failed. Dev OTP generated for local testing: ${otp}`);
+    } else {
+      console.error(`[AUTH] Failed to dispatch password reset OTP email.`);
+    }
   }
 
   return { message: "If an account exists with this email, an OTP has been sent." };

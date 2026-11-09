@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, HelpCircle, ShieldCheck } from "lucide-react";
+import { ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 
 export default function FaqSection() {
   const [openIdx, setOpenIdx] = useState(0);
@@ -36,42 +36,41 @@ export default function FaqSection() {
       <div className="max-w-5xl w-full mx-auto relative z-10">
         
         {/* Header */}
-        <div className="text-center mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider">
-            <HelpCircle className="w-4 h-4 text-blue-600" />
-            Frequently Asked Questions
-          </div>
+        <div className="text-center mb-14 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+            Questions & Answers
+          </p>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-            Got Questions? We Have Answers.
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Frequently asked questions.
           </h2>
 
           <p className="text-base text-slate-600 max-w-xl mx-auto">
-            Everything you need to know about student privacy, clinical safety, and how to get started.
+            Clear answers regarding student privacy, anonymity, academic segregation, and app capabilities.
           </p>
         </div>
 
         {/* Accordion List */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {faqs.map((faq, idx) => {
             const isOpen = openIdx === idx;
             return (
               <div
                 key={idx}
-                className="rounded-2xl bg-white border border-slate-200/90 hover:border-blue-300 transition-all shadow-sm overflow-hidden"
+                className="rounded-xl bg-white border border-slate-200/90 hover:border-slate-300 transition-colors shadow-sm overflow-hidden"
               >
                 <button
                   onClick={() => setOpenIdx(isOpen ? -1 : idx)}
-                  className="w-full p-6 text-left flex items-center justify-between gap-4 font-bold text-base sm:text-lg text-slate-900 hover:text-blue-600 transition-colors"
+                  className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 font-bold text-base sm:text-lg text-slate-900 hover:text-blue-600 transition-colors"
                 >
                   <span>{faq.q}</span>
-                  <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-600">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-slate-600">
                     {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                   </div>
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-6 pt-1 text-slate-600 text-sm leading-relaxed border-t border-slate-100 animate-in fade-in duration-200">
+                  <div className="px-5 sm:px-6 pb-6 pt-1 text-slate-600 text-sm leading-relaxed border-t border-slate-100">
                     {faq.a}
                   </div>
                 )}
@@ -81,17 +80,17 @@ export default function FaqSection() {
         </div>
 
         {/* Still have questions banner */}
-        <div className="mt-12 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div className="mt-12 p-6 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
-            <ShieldCheck className="w-6 h-6 text-teal-600 shrink-0" />
+            <ShieldCheck className="w-6 h-6 text-blue-600 shrink-0" />
             <div>
               <p className="text-sm font-bold text-slate-900">Have a specific confidential question?</p>
-              <p className="text-xs text-slate-500">Reach out directly to the MMUST Counseling Unit.</p>
+              <p className="text-xs text-slate-500">Reach out directly to the MMUST Counseling & Wellness Unit.</p>
             </div>
           </div>
           <a
             href="#contact"
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20"
+            className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
           >
             Contact Counseling Unit
           </a>

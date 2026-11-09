@@ -1,0 +1,272 @@
+name: CI/CD Pipeline - Zero-Downtime Blue-Green Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: production_deploy
+  cancel-in-progress: false
+
+jobs:
+  # ===========================================================================
+  # 1. BUILD FRONTENDS & VALIDATE BACKEND
+  # ===========================================================================
+  build-and-test:
+    name: Build Frontends & Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: |
+            client/package-lock.json
+            admin/package-lock.json
+            server/package-lock.json
+
+      # Verify Backend syntax
+      - name: Install Server Dependencies
+        run: |
+          cd server
+          npm ci
+
+      - name: Verify Server Syntax
+        run: |
+          cd server
+          node -c server.js
+          node -c app.js
+          node -c src/config/db.js
+          node -c src/controllers/admin.controller.js
+          node -c src/controllers/chat.controller.js
+
+      # Build Client (Student Portal)
+      - name: Build Client (Vite)
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || '/api/v1' }}
+        run: |
+          cd client
+          npm ci
+          npm run build
+
+      # Build Admin Dashboard
+      - name: Build Admin (Vite)
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL || '/api/v1' }}
+        run: |
+          cd admin
+          npm ci
+          npm run build
+
+      # Archive artifacts for deployment
+      - name: Archive Client Dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist/
+          retention-days: 1
+
+      - name: Archive Admin Dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-dist
+          path: admin/dist/
+          retention-days: 1
+
+  # ===========================================================================
+  # 2. ZERO-DOWNTIME DEPLOYMENT (ATOMIC SYMLINK + BLUE-GREEN CONTAINER SWAP)
+  # ===========================================================================
+  deploy:
+    name: Deploy to Contabo VPS (Zero-Downtime)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Client Dist Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist
+
+      - name: Download Admin Dist Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-dist
+          path: admin/dist
+
+      # Configure SSH Authentication
+      - name: Setup SSH Keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.VPS_PORT || 22 }} -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # Create Timestamped Release Directory on VPS
+      - name: Prepare Release Structure on VPS
+        run: |
+          RELEASE_ID=$(date +%Y%m%d_%H%M%S)
+          echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
+
+          ssh -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p /var/www/mmust-dcbt/releases/$RELEASE_ID/client/dist \
+                      /var/www/mmust-dcbt/releases/$RELEASE_ID/admin/dist \
+                      /var/www/mmust-dcbt/server"
+
+      # Sync Frontends into New Release Folder
+      - name: Rsync Frontends to Release Folder
+        run: |
+          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            client/dist/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/releases/${{ env.RELEASE_ID }}/client/dist/
+
+          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            admin/dist/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/releases/${{ env.RELEASE_ID }}/admin/dist/
+
+      # Sync Server Source Code & Scripts
+      - name: Rsync Backend Source & Tools
+        run: |
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude '.env' \
+            --exclude 'coverage' \
+            -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            server/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/server/
+
+          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            docker-compose.yml ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/docker-compose.yml
+
+          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            scripts/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/scripts/
+
+          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            scripts/rollback.sh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/rollback.sh
+
+      # Execute Blue-Green Zero-Downtime Rollout on VPS
+      - name: Execute Blue-Green Container Swap & Atomic Symlink
+        run: |
+          ssh -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} bash -s << 'EOF'
+            set -e
+            APP_DIR="/var/www/mmust-dcbt"
+            RELEASE_DIR="$APP_DIR/releases/${{ env.RELEASE_ID }}"
+            UPSTREAM_FILE="$APP_DIR/upstream.conf"
+
+            cd "$APP_DIR"
+            chmod +x rollback.sh scripts/*.sh
+
+            # 1. Update/write secure production .env with restricted 600 permissions
+            touch .env
+            chmod 600 .env
+            cat << 'ENVFILE' > .env
+            NODE_ENV=production
+            PORT=5000
+            POSTGRES_DB=${{ secrets.POSTGRES_DB || 'mmust_dcbt' }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DB_SSL=${{ secrets.DB_SSL || 'false' }}
+            NEON_DATABASE_URL=${{ secrets.NEON_DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            EMAIL_USER=${{ secrets.EMAIL_USER }}
+            EMAIL_PASS=${{ secrets.EMAIL_PASS }}
+            ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+            ENVFILE
+            chmod 600 .env
+
+            # 2. Run Preflight Security & Secrets Validation
+            echo ">>> Running preflight security & secret validation..."
+            bash scripts/preflight-check.sh .env
+
+            # 3. Initialize upstream file if not present (default to 5001 blue)
+            if [ ! -f "$UPSTREAM_FILE" ]; then
+              echo "server 127.0.0.1:5001;" > "$UPSTREAM_FILE"
+            fi
+
+            # 4. Determine Active Slot vs Target Standby Slot
+            if grep -q "5001" "$UPSTREAM_FILE"; then
+              TARGET_SLOT="green"
+              TARGET_SERVICE="server_green"
+              TARGET_CONTAINER="mmust_dcbt_server_green"
+              TARGET_PORT=5002
+              OLD_CONTAINER="mmust_dcbt_server_blue"
+            else
+              TARGET_SLOT="blue"
+              TARGET_SERVICE="server_blue"
+              TARGET_CONTAINER="mmust_dcbt_server_blue"
+              TARGET_PORT=5001
+              OLD_CONTAINER="mmust_dcbt_server_green"
+            fi
+
+            echo ">>> Active Slot: $OLD_CONTAINER | Deploying Target: $TARGET_SERVICE (Port $TARGET_PORT)..."
+
+            # 4. Ensure DB container is up
+            docker compose up -d db
+
+            # 5. Build and start Target container while Old container stays live
+            docker compose build "$TARGET_SERVICE"
+            docker compose up -d "$TARGET_SERVICE"
+
+            # 6. Verify health of Target container before routing any traffic
+            echo ">>> Waiting for $TARGET_CONTAINER to become healthy on port $TARGET_PORT..."
+            MAX_ATTEMPTS=30
+            ATTEMPT=0
+            HEALTHY=false
+
+            while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+              if curl -s -f "http://127.0.0.1:${TARGET_PORT}/health/ready" > /dev/null 2>&1; then
+                HEALTHY=true
+                break
+              fi
+              sleep 1
+              ATTEMPT=$((ATTEMPT + 1))
+            done
+
+            if [ "$HEALTHY" = false ]; then
+              echo "[CRITICAL ERROR] Target container $TARGET_CONTAINER failed health check."
+              echo "Aborting deployment! Old container $OLD_CONTAINER remains active and untouched."
+              docker stop "$TARGET_CONTAINER" || true
+              exit 1
+            fi
+
+            echo ">>> Healthcheck passed on port $TARGET_PORT!"
+
+            # 7. Switch Upstream to New Port
+            echo "server 127.0.0.1:${TARGET_PORT};" > "$UPSTREAM_FILE"
+
+            # 8. Switch Frontend Atomic Symlink
+            ln -sfn "$RELEASE_DIR" "$APP_DIR/current"
+
+            # 9. Graceful Nginx reload (zero dropped packets)
+            if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx; then
+              sudo systemctl reload nginx
+              echo ">>> Nginx reloaded with new upstream and frontend assets."
+            fi
+
+            # 10. Stop Old Container (DO NOT DELETE - KEPT FOR INSTANT ROLLBACK)
+            if docker ps --format '{{.Names}}' | grep -q "^${OLD_CONTAINER}$"; then
+              echo ">>> Stopping old container $OLD_CONTAINER (preserved for rollback)..."
+              docker stop "$OLD_CONTAINER" || true
+            fi
+
+            # 11. Cleanup old releases (keep last 5 for chunk retention and frontend rollback)
+            cd "$APP_DIR/releases"
+            ls -1dt * | tail -n +6 | xargs -r rm -rf
+
+            # 12. Prune dangling build images
+            docker image prune -f
+
+            echo "=========================================================="
+            echo " MMUST DCBT Zero-Downtime Deployment Finished Successfully!"
+            echo " Active Slot: $TARGET_SLOT on port $TARGET_PORT"
+            echo " Rollback available at any time via: bash $APP_DIR/rollback.sh"
+            echo "=========================================================="
+          EOF

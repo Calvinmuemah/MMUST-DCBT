@@ -21,22 +21,25 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative bg-[#F8FAFC] border-t border-slate-200 text-slate-600 pt-8 sm:pt-10 pb-6 sm:pb-8 overflow-hidden">
+    <footer className="relative bg-[#060911] border-t border-slate-800/80 text-slate-400 pt-8 sm:pt-10 pb-6 sm:pb-8 overflow-hidden">
+      {/* Ambient subtle backlight */}
+      <div className="absolute top-0 left-1/3 w-96 h-36 bg-blue-600/5 blur-[100px] rounded-full pointer-events-none" />
+
       <div className="w-full px-3 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-6 mb-8">
           
           {/* COLUMN 1: BRAND INFO, APK DOWNLOAD & SOCIALS (4 cols) */}
           <div className="lg:col-span-4 space-y-3.5">
             <div>
-              <span className="font-black text-lg tracking-tight text-slate-900">
-                MMUST <span className="text-blue-600">DCBT</span>
+              <span className="font-black text-lg tracking-tight text-white">
+                MMUST <span className="text-blue-500">DCBT</span>
               </span>
-              <p className="text-[10px] text-slate-500 font-medium">
+              <p className="text-[10px] text-slate-400 font-medium">
                 Digital Cognitive Behavioural Therapy Platform
               </p>
             </div>
 
-            <p className="text-xs text-slate-600 leading-normal max-w-sm">
+            <p className="text-xs text-slate-400 leading-normal max-w-sm">
               An evidence-based mental health platform empowering university students at 
               Masinde Muliro University of Science & Technology with 24/7 confidential CBT exercises, 
               AI thought reframing, and personalized mental wellness guidance.
@@ -47,12 +50,12 @@ export default function Footer() {
               <a
                 href="/app-release.apk"
                 download="MMUSTDCBT.apk"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-600/20 hover:shadow-blue-600/30 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download Android APK (v1.0)</span>
               </a>
-              <p className="text-[10px] text-slate-400 mt-1 font-medium">
+              <p className="text-[10px] text-slate-500 mt-1 font-medium">
                 Free download • Android 7.0+ • Size: ~28MB
               </p>
             </div>
@@ -63,7 +66,7 @@ export default function Footer() {
                 href="https://github.com/Calvinmuemah/MMUST-DCBT"
                 target="_blank"
                 rel="noreferrer"
-                className="w-7 h-7 rounded-full bg-white border border-slate-300 flex items-center justify-center text-slate-700 hover:text-white hover:bg-slate-900 hover:border-slate-900 transition-all duration-300 shadow-sm group"
+                className="w-7 h-7 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-800 hover:border-slate-600 transition-all duration-300 shadow-sm group"
                 aria-label="GitHub"
                 title="GitHub"
               >
@@ -74,80 +77,80 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* COLUMN 2: COMPANY / PLATFORM (2 cols - Screenshot 4 style) */}
+          {/* COLUMN 2: COMPANY / PLATFORM */}
           <div className="lg:col-span-2 space-y-2.5">
-            <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-900">
+            <h4 className="text-[11px] font-black uppercase tracking-wider text-white">
               Platform
             </h4>
             <ul className="space-y-1.5 text-xs font-medium">
               <li>
-                <a href="#about" className="hover:text-blue-600 transition-colors">
+                <a href="#about" className="hover:text-blue-400 transition-colors">
                   About DCBT
                 </a>
               </li>
               <li>
-                <a href="#modules" className="hover:text-blue-600 transition-colors">
+                <a href="#modules" className="hover:text-blue-400 transition-colors">
                   CBT Modules
                 </a>
               </li>
               <li>
-                <a href="#how-it-works" className="hover:text-blue-600 transition-colors">
+                <a href="#how-it-works" className="hover:text-blue-400 transition-colors">
                   How It Works
                 </a>
               </li>
               <li>
-                <a href="#impact" className="hover:text-blue-600 transition-colors">
+                <a href="#impact" className="hover:text-blue-400 transition-colors">
                   Campus Impact
                 </a>
               </li>
               <li>
-                <a href="#download" className="hover:text-blue-600 transition-colors">
+                <a href="#download" className="hover:text-blue-400 transition-colors">
                   Download APK
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* COLUMN 3: HELP & RESOURCES (2 cols - Screenshot 4 style) */}
+          {/* COLUMN 3: HELP & RESOURCES */}
           <div className="lg:col-span-2 space-y-2.5">
-            <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-900">
+            <h4 className="text-[11px] font-black uppercase tracking-wider text-white">
               Resources
             </h4>
             <ul className="space-y-1.5 text-xs font-medium">
               <li>
-                <a href="#about" className="hover:text-blue-600 transition-colors">
+                <a href="#about" className="hover:text-blue-400 transition-colors">
                   Counseling Support
                 </a>
               </li>
               <li>
-                <a href="#faq" className="hover:text-blue-600 transition-colors">
+                <a href="#faq" className="hover:text-blue-400 transition-colors">
                   Privacy & Ethics
                 </a>
               </li>
               <li>
-                <a href="#faq" className="hover:text-blue-600 transition-colors">
+                <a href="#faq" className="hover:text-blue-400 transition-colors">
                   Clinical Protocols
                 </a>
               </li>
               <li>
-                <a href="#impact" className="hover:text-blue-600 transition-colors">
+                <a href="#impact" className="hover:text-blue-400 transition-colors">
                   Campus Impact
                 </a>
               </li>
               <li>
-                <a href="#download" className="hover:text-blue-600 transition-colors">
+                <a href="#download" className="hover:text-blue-400 transition-colors">
                   Mobile App
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* COLUMN 4: NEWSLETTER / UPDATES (4 cols - Screenshot 4 style) */}
+          {/* COLUMN 4: NEWSLETTER / UPDATES */}
           <div className="lg:col-span-4 space-y-2.5">
-            <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-900">
+            <h4 className="text-[11px] font-black uppercase tracking-wider text-white">
               Subscribe to Newsletter
             </h4>
-            <p className="text-xs text-slate-600 leading-normal">
+            <p className="text-xs text-slate-400 leading-normal">
               Stay informed on campus mental wellness research, upcoming workshops, and new CBT feature releases.
             </p>
 
@@ -158,15 +161,15 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all font-medium shadow-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium shadow-sm"
                 />
               </div>
 
-              {/* Blue Subscribe button (Screenshot 4) */}
+              {/* Blue Subscribe button */}
               <button
                 type="submit"
                 disabled={subscribed}
-                className="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-600/20 transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {subscribed ? (
                   <>
@@ -183,22 +186,22 @@ export default function Footer() {
             </form>
 
             <p className="text-[10px] text-slate-500 flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-teal-600 inline" />
+              <ShieldCheck className="w-3 h-3 text-teal-400 inline" />
               100% confidential. No spam, unsubscribe anytime.
             </p>
           </div>
 
         </div>
 
-        {/* BOTTOM DIVIDER & COPYRIGHT (Screenshot 4 style) */}
-        <div className="pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 text-center sm:text-left">
+        {/* BOTTOM DIVIDER & COPYRIGHT */}
+        <div className="pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 text-center sm:text-left">
           <p>
             © {new Date().getFullYear()} MMUST DCBT Initiative. Masinde Muliro University of Science and Technology. All Rights Reserved.
           </p>
-          <div className="flex items-center gap-4 sm:gap-6 font-medium">
-            <a href="#faq" className="hover:text-blue-600 transition-colors">Privacy Policy</a>
-            <a href="#faq" className="hover:text-blue-600 transition-colors">Terms & Ethical Guidelines</a>
-            <a href="#contact" className="hover:text-blue-600 transition-colors">Support</a>
+          <div className="flex items-center gap-4 sm:gap-6 font-medium text-slate-400">
+            <a href="#faq" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
+            <a href="#faq" className="hover:text-blue-400 transition-colors">Terms & Ethical Guidelines</a>
+            <a href="#contact" className="hover:text-blue-400 transition-colors">Support</a>
           </div>
         </div>
       </div>

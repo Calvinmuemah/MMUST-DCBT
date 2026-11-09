@@ -17,13 +17,13 @@ import {
 } from "../controllers/auth.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
-import { loginLimiter, otpLimiter, passwordResetLimiter } from "../middleware/rateLimiter.js";
+import { loginLimiter, otpLimiter, passwordResetLimiter, registerLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // AUTH
-router.post("/register", register);
-router.post("/anonymous", registerAnonymous);
+router.post("/register", registerLimiter, register);
+router.post("/anonymous", registerLimiter, registerAnonymous);
 router.post("/login", loginLimiter, login);
 
 // PASSWORD RESET / OTP

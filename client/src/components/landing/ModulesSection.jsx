@@ -94,127 +94,120 @@ export default function ModulesSection() {
   const current = modules[activeTab];
 
   return (
-    <section id="modules" className="relative px-3 sm:px-6 py-24 md:py-32 bg-slate-50/60 border-t border-slate-200/80">
+    <section id="modules" className="relative px-3 sm:px-6 py-20 md:py-28 bg-slate-50/70 border-t border-slate-200">
       <div className="w-full relative z-10">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-          <div className="max-w-2xl space-y-3">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+              Interactive Tools
+            </p>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
               Clinical Modules Crafted for <span className="text-blue-600">Student Well-being.</span>
             </h2>
           </div>
-          <p className="text-slate-600 text-base max-w-sm">
-            Proven cognitive tools combined with modern software engineering for seamless, confidential care.
+          <p className="text-slate-600 text-sm sm:text-base max-w-sm leading-relaxed">
+            Evidence-based CBT methods structured into easy, daily exercises on your phone.
           </p>
         </div>
 
-        {/* Tab Navigation Pill Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-10 custom-scrollbar">
+        {/* Tab Navigation Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-8 custom-scrollbar">
           {modules.map((m, idx) => (
             <button
               key={m.id}
               onClick={() => setActiveTab(idx)}
-              className={`px-5 py-3 rounded-2xl text-xs md:text-sm font-bold flex items-center gap-2.5 whitespace-nowrap transition-all duration-300 ${
+              className={`px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-2 whitespace-nowrap transition-colors ${
                 activeTab === idx
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-[1.02]"
-                  : "bg-white text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 border border-slate-200 shadow-sm"
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              {m.icon}
+              <span className={activeTab === idx ? "text-blue-400" : "text-blue-600"}>
+                {m.icon}
+              </span>
               <span>{m.title}</span>
             </button>
           ))}
         </div>
 
-        {/* 3D-STYLE SHOWCASE (Clean White Palette) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white border border-slate-200 rounded-[36px] p-8 md:p-12 shadow-xl">
+        {/* SHOWCASE CONTAINER */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white border border-slate-200 rounded-2xl p-6 sm:p-10 shadow-sm">
           
           {/* Left info */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="inline-block px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700 uppercase tracking-wider">
+          <div className="lg:col-span-6 space-y-5">
+            <span className="inline-block px-3 py-1 rounded-md bg-blue-50 text-xs font-semibold text-blue-700">
               {current.category}
-            </div>
+            </span>
 
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
               {current.title}
             </h3>
 
-            <p className="text-slate-600 text-base leading-relaxed">
+            <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
               {current.desc}
             </p>
 
-            <div className="space-y-3 pt-2">
-              <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-                Key Clinical Capabilities:
+            <div className="space-y-2.5 pt-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                What you can do:
               </p>
               {current.benefits.map((b, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm text-slate-700">
-                  <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 font-bold">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  </div>
+                <div key={i} className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-700">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
                   <span>{b}</span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-4">
+            <div className="pt-2">
               <a
                 href="#how-it-works"
-                className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
               >
-                <span>Learn how this module operates</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>See how it works</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
 
           {/* Right: Display Card */}
           <div className="lg:col-span-6 relative flex justify-center">
-            {/* Main Display Card */}
-            <div className="relative w-full max-w-lg bg-slate-50 border border-slate-200 rounded-3xl p-6 md:p-8 shadow-md">
+            <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-xl p-5 sm:p-7 space-y-4">
               
               {/* Card Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center">
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
                     {current.icon}
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-slate-900">{current.title}</h4>
-                    <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">{current.previewCard.tag}</p>
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900">{current.title}</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">{current.previewCard.tag}</p>
                   </div>
                 </div>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Active
+                </span>
               </div>
 
-              {/* Dynamic content simulation */}
-              <div className="py-6 space-y-4">
-                <div className="p-4 rounded-2xl bg-white border border-slate-200 text-sm font-medium text-slate-800 shadow-sm">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Trigger Scenario</span>
+              {/* Real Thought Record Exercise View */}
+              <div className="space-y-3">
+                <div className="p-3.5 rounded-lg bg-white border border-slate-200 text-xs sm:text-sm font-normal text-slate-800">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Automatic Negative Thought</span>
                   {current.previewCard.title}
                 </div>
 
-                <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200 text-xs font-semibold text-blue-900 leading-relaxed">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 block mb-1">Clinical Detection</span>
+                <div className="p-3.5 rounded-lg bg-blue-50/70 border border-blue-200 text-xs text-blue-900 leading-relaxed">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block mb-1">Identified Distortion</span>
                   {current.previewCard.distortion}
                 </div>
 
-                <div className="p-4 rounded-2xl bg-teal-50/80 border border-teal-200 text-xs font-medium text-teal-900 leading-relaxed">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-teal-700 block mb-1">CBT Therapeutic Output</span>
+                <div className="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-950 leading-relaxed">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">Balanced Reframe</span>
                   {current.previewCard.reframed}
                 </div>
-              </div>
-
-              {/* Card Footer */}
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-                <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  {current.previewCard.severity}
-                </span>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
-                  Verified Protocol
-                </span>
               </div>
 
             </div>

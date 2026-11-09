@@ -1,0 +1,87 @@
+services:
+  # ---------------------------------------------------------------------------
+  # MMUST DCBT Backend API - BLUE SLOT (Port 5001)
+  # ---------------------------------------------------------------------------
+  server_blue:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: mmust_dcbt_server_blue
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5001:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}@db:5432/${POSTGRES_DB:-mmust_dcbt}}"
+      - "JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required in .env}"
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://yourdomain.com}
+      - DB_SSL=${DB_SSL:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mmust_network
+
+  # ---------------------------------------------------------------------------
+  # MMUST DCBT Backend API - GREEN SLOT (Port 5002)
+  # ---------------------------------------------------------------------------
+  server_green:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: mmust_dcbt_server_green
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5002:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}@db:5432/${POSTGRES_DB:-mmust_dcbt}}"
+      - "JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required in .env}"
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://yourdomain.com}
+      - DB_SSL=${DB_SSL:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mmust_network
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16 Database
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: mmust_dcbt_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mmust_dcbt}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/sql:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - mmust_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-mmust_dcbt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  mmust_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

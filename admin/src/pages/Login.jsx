@@ -73,9 +73,8 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-text-light">
-          Don't have an admin account?{' '}
-          <a href="/register" className="text-primary font-bold hover:underline">Register</a>
+        <p className="mt-8 text-center text-xs text-slate-500 font-medium">
+          Authorized university administrative personnel only.
         </p>
       </div>
     </div>
