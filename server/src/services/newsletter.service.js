@@ -300,11 +300,18 @@ export const sendBroadcast = async ({ subject, body, adminUser, isTest = false, 
           subject: `[PREVIEW] ${subject}`,
           html: buildEmailHtml(`[TEST PREVIEW] ${subject}`, body, target),
         });
+        return {
+          success: true,
+          delivered: true,
+          message: `Test preview email successfully delivered to ${target}`,
+          recipientCount: 1,
+        };
       } catch (mailErr) {
         console.warn("[NEWSLETTER] Test email dispatch failed:", mailErr.message);
         return {
           success: true,
-          message: `Preview generated. Note: Live delivery failed (${mailErr.message}). Check SMTP credentials in production environment variables.`,
+          delivered: false,
+          message: `Preview generated, but Gmail rejected the login (${mailErr.message}). Please update EMAIL_PASS in your Vercel Environment Variables.`,
           recipientCount: 1,
         };
       }
@@ -312,7 +319,8 @@ export const sendBroadcast = async ({ subject, body, adminUser, isTest = false, 
 
     return {
       success: true,
-      message: `Test preview email successfully sent to ${target}`,
+      delivered: false,
+      message: `Preview generated, but EMAIL_USER or EMAIL_PASS are missing from your Vercel Environment Variables.`,
       recipientCount: 1,
     };
   }
@@ -375,8 +383,27 @@ export const sendBroadcast = async ({ subject, body, adminUser, isTest = false, 
     console.warn("[NEWSLETTER] Audit log skipped:", logErr.message);
   }
 
+  if (!transporter) {
+    return {
+      success: true,
+      delivered: false,
+      message: `Broadcast recorded in database, but live emails could not be dispatched because EMAIL_USER or EMAIL_PASS are missing in your Vercel Environment Variables.`,
+      data: broadcastResult.rows[0],
+    };
+  }
+
+  if (sentCount === 0 && recipients.length > 0) {
+    return {
+      success: true,
+      delivered: false,
+      message: `Broadcast recorded in database, but Gmail rejected SMTP authentication (BadCredentials). Please update EMAIL_PASS with a fresh Google App Password in Vercel.`,
+      data: broadcastResult.rows[0],
+    };
+  }
+
   return {
     success: true,
+    delivered: true,
     message: `Broadcast successfully sent to ${sentCount} active subscribers.`,
     data: broadcastResult.rows[0],
   };

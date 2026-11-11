@@ -96,7 +96,11 @@ const EmailBroadcast = () => {
         isTest: true,
         testEmail: testEmail.trim() || undefined
       });
-      setStatusMessage({ type: 'success', text: res.message || 'Test preview email sent successfully!' });
+      if (res.delivered === false) {
+        setStatusMessage({ type: 'warning', text: res.message });
+      } else {
+        setStatusMessage({ type: 'success', text: res.message || 'Test preview email sent successfully!' });
+      }
     } catch (err) {
       setStatusMessage({ type: 'error', text: err.response?.data?.message || err.message || 'Failed to send test email.' });
     } finally {
@@ -119,9 +123,13 @@ const EmailBroadcast = () => {
         body,
         isTest: false
       });
-      setStatusMessage({ type: 'success', text: res.message || 'Broadcast dispatched successfully to subscribers!' });
-      setSubject('');
-      setBody('');
+      if (res.delivered === false) {
+        setStatusMessage({ type: 'warning', text: res.message });
+      } else {
+        setStatusMessage({ type: 'success', text: res.message || 'Broadcast dispatched successfully to subscribers!' });
+        setSubject('');
+        setBody('');
+      }
       fetchData();
     } catch (err) {
       setStatusMessage({ type: 'error', text: err.response?.data?.message || err.message || 'Failed to dispatch broadcast.' });
@@ -273,6 +281,8 @@ const EmailBroadcast = () => {
         <div className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between border ${
           statusMessage.type === 'success' 
             ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+            : statusMessage.type === 'warning'
+            ? 'bg-amber-50 border-amber-200 text-amber-900'
             : 'bg-rose-50 border-rose-200 text-rose-800'
         }`}>
           <div className="flex items-center gap-2">
