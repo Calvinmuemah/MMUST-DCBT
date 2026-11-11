@@ -18,16 +18,8 @@ export default function FaqSection() {
       a: "Yes. In the app, you can create or generate an anonymous alias. You do not need to provide your student registration number, personal email, or phone number to access full cognitive reframing modules and AI support."
     },
     {
-      q: "What exercises and wellness tools are included in the mobile app?",
-      a: "The MMUST DCBT Android app features evidence-based cognitive restructuring exercises, structured self-care journaling, daily habit planning, distortion pattern analyzers, mood trend analytics, and 24/7 AI-guided conversational support."
-    },
-    {
       q: "Is the AI assistant a replacement for a professional human therapist?",
       a: "No. MMUST DCBT is designed as a proactive digital self-management and cognitive training tool based on proven CBT techniques. While highly effective for managing everyday exam stress, anxiety, and negative thinking, it is not a substitute for formal psychiatric treatment. It serves as an early-intervention bridge to campus counselors."
-    },
-    {
-      q: "How do I install MMUST DCBT on my smartphone?",
-      a: "Simply tap any 'Download APK' button on this website to download the MMUST DCBT Android APK directly to your phone. Tap the downloaded file to install it in seconds."
     }
   ];
 
