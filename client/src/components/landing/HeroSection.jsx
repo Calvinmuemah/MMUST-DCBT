@@ -1,123 +1,113 @@
 import { 
-  Download, 
+  HeartHandshake, 
   ArrowRight, 
-  CheckCircle2 
+  ShieldCheck, 
+  CheckCircle2, 
+  Sparkles
 } from "lucide-react";
+import depressionHeroImg from "../../assets/african-student-depression.jpg";
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center px-3 sm:px-6 py-12 sm:py-16 md:py-24 overflow-hidden bg-white">
-      {/* Soft Ambient Light Glows (Light Grayish) */}
-      <div className="absolute top-0 -left-40 w-[500px] h-[500px] bg-slate-200/50 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 -right-40 w-[500px] h-[500px] bg-slate-100/60 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Subtle grid pattern overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a08_1px,transparent_1px),linear-gradient(to_bottom,#0f172a08_1px,transparent_1px)] bg-[size:3rem_3rem] sm:bg-[size:3.5rem_3.5rem] pointer-events-none" />
+    <section className="relative min-h-[85vh] flex items-center justify-center px-3 sm:px-6 py-12 sm:py-16 md:py-24 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50/50">
+      
+      {/* Soft Ambient Warmth Glows */}
+      <div className="absolute top-0 left-1/4 w-[450px] h-[450px] bg-blue-100/60 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-indigo-50/70 blur-[140px] rounded-full pointer-events-none" />
+      
+      {/* Subtle background grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a06_1px,transparent_1px),linear-gradient(to_bottom,#0f172a06_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
 
       <div className="w-full relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-10 items-center">
         
-        {/* LEFT COLUMN: SMARTPHONE MOCKUP WITH SCREENSHOT (Hanging & Tilted) */}
-        <div className="lg:col-span-5 order-2 lg:order-1 flex justify-center w-full py-6 sm:py-10">
-          <div className="relative w-full max-w-[270px] sm:max-w-[310px] md:max-w-[330px]">
-            
-            {/* Suspended Ground Shadow (hanging effect) */}
-            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-4/5 h-8 bg-slate-900/30 blur-xl rounded-full animate-shadow-hang pointer-events-none" />
-
-            {/* Ambient Backlight (Light Grayish) */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-slate-200/70 via-slate-100/60 to-slate-300/40 blur-3xl rounded-[60px] transform -rotate-6 scale-110 pointer-events-none" />
-
-            {/* Hanging & Tilted Phone Frame */}
-            <div className="relative animate-phone-hang will-change-transform transition-transform duration-500 hover:scale-[1.02]">
-              
-              {/* Realistic Metallic Phone Bezel with Chrome Accent */}
-              <div className="relative rounded-[44px] sm:rounded-[50px] bg-gradient-to-b from-slate-700 via-slate-900 to-slate-950 p-[8px] sm:p-[10px] shadow-[0_30px_70px_-15px_rgba(15,23,42,0.4),0_10px_25px_-5px_rgba(100,116,139,0.25)] border-2 border-slate-600/60 ring-2 ring-slate-900/80">
-                
-                {/* Speaker Ear-piece Notch bar at top of bezel */}
-                <div className="absolute top-3 sm:top-3.5 left-1/2 -translate-x-1/2 w-16 h-1 bg-slate-700/90 rounded-full z-30" />
-
-                {/* Inner screen container with realistic curved glass */}
-                <div className="relative rounded-[36px] sm:rounded-[42px] bg-white overflow-hidden border border-slate-200 select-none shadow-inner">
-                  <img 
-                    src="/phone-display.jpeg" 
-                    alt="MMUST DCBT App Home Screen" 
-                    className="w-full h-auto object-cover block"
-                    loading="eager"
-                  />
-                  {/* Subtle glass reflection sheen across screen */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: HERO TYPOGRAPHY & CALL TO ACTION */}
-        <div className="lg:col-span-7 order-1 lg:order-2 space-y-6 sm:space-y-7 lg:pl-4 text-left">
+        {/* ========================================================
+            LEFT COLUMN: Human Story & Depression Awareness Copy
+           ======================================================== */}
+        <div className="lg:col-span-6 space-y-6 sm:space-y-7 text-left">
           
-          {/* Headline */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
-            Digital cognitive therapy, <br />
-            <span className="text-blue-600">built for MMUST students.</span>
+
+          {/* Main Hero Headline */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[50px] font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+            Behind the quiet smiles in class,{" "}
+            <span className="text-blue-600 block mt-1">
+              you don't have to carry depression alone.
+            </span>
           </h1>
 
-          {/* Descriptive Subtitle */}
-          <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed font-normal max-w-2xl">
-            A free, confidential CBT platform helping university students navigate academic pressure, stress, and anxiety with 24/7 guided thought restructuring and personalized wellness tools.
-          </p>
+          {/* Culturally Grounded Narrative ("Something that says about us") */}
+          <div className="space-y-3 text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed font-normal">
+            <p>
+              University life in Kenya carries heavy, unspoken burdens—the relentless pressure to succeed, financial strain, family expectations, and the days where getting out of bed feels like an impossible mountain.
+            </p>
+            <p className="text-slate-700 font-medium">
+              Too often, we suffer in silence because of stigma or fear of being misunderstood. <strong>MMUST DCBT is built by our community, for our reality</strong>: a safe, completely anonymous digital sanctuary where you can unburden your mind, learn evidence-based Cognitive Behavioral tools, and heal on your own terms.
+            </p>
+          </div>
 
-          {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+          {/* Action Call-to-Actions */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
             <a
-              href="#download"
-              className="px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm sm:text-base shadow-sm transition-colors flex items-center justify-center gap-2 group text-center"
+              href="/register"
+              className="px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm sm:text-base shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/25 transition-all flex items-center justify-center gap-2.5 text-center group cursor-pointer"
             >
-              <Download className="w-4 h-4" />
-              <span>Download Android APK</span>
+              <HeartHandshake className="w-4 h-4 text-blue-200 group-hover:scale-110 transition-transform" />
+              <span>Begin Confidential Support</span>
+              <ArrowRight className="w-4 h-4 text-white/80 group-hover:translate-x-0.5 transition-transform" />
             </a>
 
             <a
-              href="#how-it-works"
+              href="#app-showcase"
               className="px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 text-center"
             >
-              <span>How It Works</span>
+              <span>Explore Mobile App</span>
               <ArrowRight className="w-4 h-4 text-slate-400" />
             </a>
           </div>
 
-          {/* Trust Subtext */}
-          <p className="text-xs text-slate-500 font-medium flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-1">
-            <span className="flex items-center gap-1.5 text-slate-600">
-              <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Free for all students
+          {/* Reassurance & Trust Badges */}
+          <div className="pt-2 flex flex-wrap items-center gap-y-2 gap-x-5 text-xs text-slate-500 font-medium">
+            <span className="flex items-center gap-1.5 text-slate-700">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" /> 100% Anonymous & Free
             </span>
-            <span className="flex items-center gap-1.5 text-slate-600">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> 100% confidential & anonymous
+            <span className="flex items-center gap-1.5 text-slate-700">
+              <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" /> Zero Judgement & Stigma
             </span>
-            <span className="flex items-center gap-1.5 text-slate-600">
-              <CheckCircle2 className="w-3.5 h-3.5 text-slate-500 shrink-0" /> Direct Android download
+            <span className="flex items-center gap-1.5 text-slate-700">
+              <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" /> University Clinicians & Peer Support
             </span>
-          </p>
+          </div>
 
-          {/* Mini Stat Bar */}
-          <div className="pt-6 border-t border-slate-200 grid grid-cols-3 gap-4 sm:gap-6 max-w-lg">
-            <div>
-              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">500+</p>
-              <p className="text-xs text-slate-500 font-normal mt-0.5">Students supported</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">24/7</p>
-              <p className="text-xs text-slate-500 font-normal mt-0.5">Always available</p>
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl md:text-3xl font-bold text-emerald-600">Zero</p>
-              <p className="text-xs text-slate-500 font-normal mt-0.5">Personal data tracked</p>
-            </div>
+
+        </div>
+
+        {/* ========================================================
+            RIGHT COLUMN: Authentic African Student Photograph & Testimonial
+           ======================================================== */}
+        <div className="lg:col-span-6 relative flex justify-center w-full">
+          
+          {/* Background Ambient Glow for Image */}
+          <div className="absolute -inset-3 bg-gradient-to-tr from-blue-600/10 via-indigo-500/10 to-teal-500/10 rounded-[36px] blur-2xl transform rotate-1 pointer-events-none" />
+
+          {/* Framed Image Container */}
+          <div className="relative w-full max-w-lg lg:max-w-none rounded-3xl overflow-hidden border border-slate-200/90 shadow-[0_20px_50px_-15px_rgba(15,23,42,0.18)] bg-slate-900 group">
+            
+            {/* The Authentic Photograph */}
+            <img 
+              src={depressionHeroImg} 
+              alt="African university student sitting thoughtfully with books, reflecting the weight of campus depression" 
+              className="w-full h-auto aspect-[4/3] sm:aspect-[16/11] object-cover object-center group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+              loading="eager"
+            />
+
+            {/* Subtle Gradient Overlay for visual polish */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent pointer-events-none" />
+
           </div>
 
         </div>
 
       </div>
+
     </section>
   );
 }

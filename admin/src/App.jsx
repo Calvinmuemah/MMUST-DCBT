@@ -7,6 +7,7 @@ import CrisisPage from './pages/Crisis';
 import SystemInsights from './pages/SystemInsights';
 import LogsPage from './pages/Logs';
 import SettingsPage from './pages/Settings';
+import EmailBroadcast from './pages/EmailBroadcast';
 import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import { logout, getProfile } from './services/api';
@@ -93,6 +94,8 @@ function App() {
         return <SystemInsights />;
       case '/logs':
         return <LogsPage />;
+      case '/broadcast':
+        return <EmailBroadcast />;
       case '/settings':
         return <SettingsPage user={user} onUpdateUser={setUser} />;
       default:
@@ -101,28 +104,33 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-slate-50/70 flex flex-col font-sans">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 h-16 flex items-center px-8 sticky top-0 z-20 justify-between shadow-sm">
+      <header className="bg-white border-b border-slate-200/80 h-16 flex items-center px-6 md:px-8 sticky top-0 z-30 justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-black tracking-tight text-slate-800 flex items-center gap-2">
-            <span className="bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent">MMUSTCare</span> 
-            <span className="text-slate-300 font-light">|</span>
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 bg-slate-100 px-3 py-1 rounded-xl border border-slate-200/60 shadow-sm">Admin</span>
-          </h1>
+          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 font-black text-sm">
+            M
+          </div>
+          <span className="text-lg font-black tracking-tight text-slate-900">
+            MMUST<span className="text-blue-600">Care</span>
+          </span>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-3 text-left">
             <div className="relative">
-              <div className="w-10 h-10 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center text-primary font-black uppercase shadow-sm">
-                {user?.name?.[0]}
+              <div className="w-9 h-9 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-sm">
+                {user?.name?.[0]?.toUpperCase() || 'A'}
               </div>
-              <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white animate-pulse" />
+              <span className="absolute -bottom-0.5 -right-0.5 block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-800 leading-tight">{user?.name}</p>
-              <p className="text-xs text-slate-400 font-medium capitalize mt-0.5">{user?.role}</p>
+            <div className="hidden sm:block">
+              <p className="text-sm font-bold text-slate-800 leading-tight">{user?.name || 'Administrator'}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200/50">
+                  {user?.role || 'admin'}
+                </span>
+              </div>
             </div>
           </div>
         </div>

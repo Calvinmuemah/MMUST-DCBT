@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import HeroSection from "../components/landing/HeroSection";
+import AppShowcaseSection from "../components/landing/AppShowcaseSection";
 import AboutSection from "../components/landing/AboutSection";
 import HowItWorksSection from "../components/landing/HowItWorksSection";
 import ModulesSection from "../components/landing/ModulesSection";
@@ -16,31 +17,34 @@ export default function LandingPage() {
       {/* 1. TOP NAVIGATION BAR */}
       <Navbar />
 
-      {/* 2. HERO SECTION */}
+      {/* 2. PRIMARY HERO SECTION (African Student Depression Story & Cultural Empathy) */}
       <HeroSection />
 
-      {/* 3. ABOUT & 4 CORE PILLARS SECTION */}
+      {/* 3. SECOND SECTION ON SCROLL: DIGITAL CBT APP SHOWCASE & APK DOWNLOAD */}
+      <AppShowcaseSection />
+
+      {/* 4. ABOUT & 4 CORE PILLARS SECTION */}
       <AboutSection />
 
-      {/* 4. HOW IT WORKS SECTION */}
+      {/* 5. HOW IT WORKS SECTION */}
       <HowItWorksSection />
 
-      {/* 5. CBT MODULES & CLINICAL SHOWCASE */}
+      {/* 6. CBT MODULES & CLINICAL SHOWCASE */}
       <ModulesSection />
 
-      {/* 6. CAMPUS IMPACT & CLINICAL RESEARCH STATS */}
+      {/* 7. CAMPUS IMPACT & CLINICAL RESEARCH STATS */}
       <ImpactStatsSection />
 
-      {/* 7. ANDROID APK DOWNLOAD & MOBILE APP SHOWCASE */}
+      {/* 8. ANDROID APK DOWNLOAD & MOBILE APP SHOWCASE */}
       <EarlyAdopterSection />
 
-      {/* 8. UNIVERSITY PARTNERS & VOICES */}
+      {/* 9. UNIVERSITY PARTNERS & VOICES */}
       <PartnersSection />
 
-      {/* 9. FREQUENTLY ASKED QUESTIONS */}
+      {/* 10. FREQUENTLY ASKED QUESTIONS */}
       <FaqSection />
 
-      {/* 10. COMPANY FOOTER (With Download APK button) */}
+      {/* 11. COMPANY FOOTER */}
       <Footer />
 
     </div>

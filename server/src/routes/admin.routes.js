@@ -8,6 +8,12 @@ import {
   deleteUser,
   getChatMessages
 } from "../controllers/admin.controller.js";
+import {
+  getSubscribers,
+  deleteSubscriber,
+  getBroadcastHistory,
+  sendBroadcast,
+} from "../controllers/newsletter.controller.js";
 import { protect, isAdmin } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -22,5 +28,11 @@ router.get("/crisis", getCrisisReports);
 router.get("/logs", getLogs);
 router.get("/chats/:sessionId", getChatMessages);
 router.delete("/users/:id", deleteUser);
+
+// Email Broadcast & Newsletter Management
+router.get("/broadcast/subscribers", getSubscribers);
+router.delete("/broadcast/subscribers/:id", deleteSubscriber);
+router.get("/broadcast/history", getBroadcastHistory);
+router.post("/broadcast/send", sendBroadcast);
 
 export default router;

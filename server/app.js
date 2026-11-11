@@ -10,6 +10,7 @@ import chatRoutes from "./src/routes/chat.routes.js";
 import journalRoutes from "./src/routes/journal.routes.js";
 import referralRoutes from "./src/routes/referral.routes.js";
 import adminRoutes from "./src/routes/admin.routes.js";
+import newsletterRoutes from "./src/routes/newsletter.routes.js";
 
 dotenv.config();
 
@@ -127,6 +128,7 @@ app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/journal", journalRoutes);
 app.use("/api/v1/referrals", referralRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/newsletter", newsletterRoutes);
 
 // Error Handling Middleware (Sanitized for sensitive production data)
 app.use((err, req, res, next) => {

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://mmust-dcbt-api.vercel.app/api/v1',
 });
 
 api.interceptors.request.use((config) => {
@@ -75,6 +75,27 @@ export const getLogs = async (category = 'all') => {
 
 export const deleteUser = async (id) => {
   const response = await api.delete(`/admin/users/${id}`);
+  return response.data;
+};
+
+// Email Broadcast & Newsletter Management
+export const getNewsletterSubscribers = async () => {
+  const response = await api.get('/admin/broadcast/subscribers');
+  return response.data.data;
+};
+
+export const deleteNewsletterSubscriber = async (id) => {
+  const response = await api.delete(`/admin/broadcast/subscribers/${id}`);
+  return response.data;
+};
+
+export const getBroadcastHistory = async () => {
+  const response = await api.get('/admin/broadcast/history');
+  return response.data.data;
+};
+
+export const sendNewsletterBroadcast = async (data) => {
+  const response = await api.post('/admin/broadcast/send', data);
   return response.data;
 };
 

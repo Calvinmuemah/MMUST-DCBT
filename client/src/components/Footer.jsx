@@ -3,21 +3,46 @@ import {
   Send, 
   CheckCircle2, 
   ShieldCheck,
-  Download
+  Download,
+  Loader2
 } from "lucide-react";
+import { postRequest } from "../utils/api";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null);
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes("@")) return;
-    setSubscribed(true);
-    setTimeout(() => {
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      setFeedback({ type: "error", message: "Please enter a valid email address." });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setFeedback(null);
+      const res = await postRequest("/newsletter/subscribe", {
+        email: cleanEmail,
+        source: "website_footer",
+      });
+
+      setFeedback({ 
+        type: "success", 
+        message: res.message || "Subscribed successfully! Thank you." 
+      });
       setEmail("");
-      setSubscribed(false);
-    }, 4000);
+      setTimeout(() => setFeedback(null), 6000);
+    } catch (err) {
+      setFeedback({ 
+        type: "error", 
+        message: err.message || "Unable to subscribe. Please try again later." 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -161,20 +186,22 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium shadow-sm"
+                  required
+                  disabled={loading}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium shadow-sm disabled:opacity-60"
                 />
               </div>
 
               {/* Blue Subscribe button */}
               <button
                 type="submit"
-                disabled={subscribed}
+                disabled={loading}
                 className="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                {subscribed ? (
+                {loading ? (
                   <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                    <span>Subscribed!</span>
+                    <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                    <span>Subscribing...</span>
                   </>
                 ) : (
                   <>
@@ -183,6 +210,12 @@ export default function Footer() {
                   </>
                 )}
               </button>
+
+              {feedback && (
+                <p className={`text-[11px] font-medium pt-1 ${feedback.type === 'success' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {feedback.message}
+                </p>
+              )}
             </form>
 
             <p className="text-[10px] text-slate-500 flex items-center gap-1">

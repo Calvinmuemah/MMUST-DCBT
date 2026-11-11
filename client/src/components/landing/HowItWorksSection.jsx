@@ -2,7 +2,6 @@ import {
   ClipboardCheck, 
   BrainCircuit, 
   TrendingUp, 
-  Download, 
   Sparkles
 } from "lucide-react";
 
@@ -57,7 +56,7 @@ export default function HowItWorksSection() {
         </div>
 
         {/* 3 STEPS CARDS */}
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {steps.map((item, i) => (
             <div 
               key={i} 
@@ -87,16 +86,6 @@ export default function HowItWorksSection() {
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="mt-12 text-center">
-          <a
-            href="#download"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download the Android App</span>
-          </a>
-        </div>
 
       </div>
     </section>

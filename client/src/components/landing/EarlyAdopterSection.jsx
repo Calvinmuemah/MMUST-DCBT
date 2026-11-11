@@ -1,14 +1,11 @@
 import { 
-  Smartphone, 
   Download,
-  ShieldCheck,
-  CheckCircle2,
-  Cpu
+  CheckCircle2
 } from "lucide-react";
 
 export default function EarlyAdopterSection() {
   return (
-    <section id="download" className="relative px-3 sm:px-6 py-16 sm:py-24 md:py-32 bg-[#060911] overflow-hidden border-t border-slate-800/80">
+    <section id="download" className="relative px-3 sm:px-6 py-14 sm:py-16 md:py-20 bg-[#060911] overflow-hidden border-t border-slate-800/80">
       {/* Ambient radial glows behind CTA and mockup */}
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-teal-500/10 blur-[130px] rounded-full pointer-events-none" />
@@ -72,20 +69,39 @@ export default function EarlyAdopterSection() {
 
         </div>
 
-        {/* RIGHT COLUMN: HAND HOLDING SMARTPHONE */}
-        <div className="lg:col-span-6 flex justify-center items-center relative w-full mt-6 lg:mt-0">
-          <div className="relative w-full max-w-[280px] sm:max-w-[340px] md:max-w-[380px] flex justify-center">
+        {/* RIGHT COLUMN: SMARTPHONE MOCKUP WITH SCREENSHOT */}
+        <div className="lg:col-span-6 flex justify-center items-center relative w-full mt-4 lg:mt-0 py-2 sm:py-4">
+          <div className="relative w-full max-w-[210px] sm:max-w-[230px] md:max-w-[250px]">
             
-            {/* Ambient soft backlight behind the hand */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/25 via-teal-400/15 to-transparent blur-3xl rounded-full pointer-events-none" />
+            {/* Suspended Ground Shadow */}
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-4/5 h-6 bg-blue-900/40 blur-lg rounded-full animate-shadow-hang pointer-events-none" />
 
-            {/* Hand holding the phone (isolated transparent cutout) */}
-            <img 
-              src="/mockup-hand.png" 
-              alt="Hand holding MMUST DCBT Mobile App" 
-              className="relative z-10 w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)] hover:scale-[1.03] transition-transform duration-500 select-none"
-              loading="eager"
-            />
+            {/* Ambient Backlight */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/30 via-teal-500/20 to-indigo-600/30 blur-2xl rounded-[50px] transform -rotate-6 scale-105 pointer-events-none" />
+
+            {/* Hanging & Tilted Phone Frame */}
+            <div className="relative animate-phone-hang will-change-transform transition-transform duration-500 hover:scale-[1.02]">
+              
+              {/* Realistic Metallic Phone Bezel with Chrome Accent */}
+              <div className="relative rounded-[36px] sm:rounded-[42px] bg-gradient-to-b from-slate-700 via-slate-900 to-slate-950 p-[6px] sm:p-[8px] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.8),0_10px_20px_-5px_rgba(37,99,235,0.2)] border-2 border-slate-600/60 ring-2 ring-slate-900/80">
+                
+                {/* Speaker Ear-piece Notch bar at top of bezel */}
+                <div className="absolute top-2.5 sm:top-3 left-1/2 -translate-x-1/2 w-12 h-1 bg-slate-700/90 rounded-full z-30" />
+
+                {/* Inner screen container with realistic curved glass */}
+                <div className="relative rounded-[30px] sm:rounded-[34px] bg-white overflow-hidden border border-slate-200 select-none shadow-inner">
+                  <img 
+                    src="/phone-display.jpeg" 
+                    alt="MMUST DCBT App Home Screen" 
+                    className="w-full h-auto object-cover block"
+                    loading="eager"
+                  />
+                  {/* Subtle glass reflection sheen across screen */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
+                </div>
+              </div>
+
+            </div>
 
           </div>
         </div>
