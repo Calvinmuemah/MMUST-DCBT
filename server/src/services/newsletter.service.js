@@ -23,10 +23,23 @@ export const ensureNewsletterTables = async () => {
         body TEXT NOT NULL,
         recipient_count INT DEFAULT 0,
         sender_email VARCHAR(255),
-        created_by INT,
+        created_by UUID,
         sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         status VARCHAR(50) DEFAULT 'sent'
       );
+    `);
+
+    // Ensure created_by column in newsletter_broadcasts is UUID (migration for existing table)
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'newsletter_broadcasts' AND column_name = 'created_by' AND data_type != 'uuid'
+        ) THEN
+          ALTER TABLE newsletter_broadcasts ALTER COLUMN created_by TYPE UUID USING NULL;
+        END IF;
+      END $$;
     `);
   } catch (err) {
     if (process.env.NODE_ENV !== "production") {
@@ -251,7 +264,7 @@ export const getBroadcastHistory = async () => {
       b.sent_at,
       u.name as sender_name
     FROM newsletter_broadcasts b
-    LEFT JOIN users u ON b.created_by = u.id
+    LEFT JOIN users u ON b.created_by = u.id OR b.created_by = u.public_id
     ORDER BY b.sent_at DESC
   `);
 
@@ -280,12 +293,21 @@ export const sendBroadcast = async ({ subject, body, adminUser, isTest = false, 
     }
 
     if (transporter) {
-      await transporter.sendMail({
-        from: `"MMUSTCare Admin" <${senderEmail}>`,
-        to: target,
-        subject: `[PREVIEW] ${subject}`,
-        html: buildEmailHtml(`[TEST PREVIEW] ${subject}`, body, target),
-      });
+      try {
+        await transporter.sendMail({
+          from: `"MMUSTCare Admin" <${senderEmail}>`,
+          to: target,
+          subject: `[PREVIEW] ${subject}`,
+          html: buildEmailHtml(`[TEST PREVIEW] ${subject}`, body, target),
+        });
+      } catch (mailErr) {
+        console.warn("[NEWSLETTER] Test email dispatch failed:", mailErr.message);
+        return {
+          success: true,
+          message: `Preview generated. Note: Live delivery failed (${mailErr.message}). Check SMTP credentials in production environment variables.`,
+          recipientCount: 1,
+        };
+      }
     }
 
     return {
@@ -320,9 +342,7 @@ export const sendBroadcast = async ({ subject, body, adminUser, isTest = false, 
         });
         sentCount++;
       } catch (sendErr) {
-        if (process.env.NODE_ENV !== "production") {
-          console.error(`Failed to send to ${recipient}:`, sendErr.message);
-        }
+        console.warn(`[NEWSLETTER] Failed to send to ${recipient}:`, sendErr.message);
       }
     }
   } else {
@@ -330,21 +350,30 @@ export const sendBroadcast = async ({ subject, body, adminUser, isTest = false, 
     sentCount = recipients.length;
   }
 
+  // Safe admin UUID
+  const adminId = adminUser?.dbId || adminUser?.id || null;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const validAdminId = (adminId && uuidRegex.test(String(adminId))) ? adminId : null;
+
   // Record broadcast log in database
   const broadcastResult = await pool.query(
     `INSERT INTO newsletter_broadcasts (subject, body, recipient_count, sender_email, created_by, status)
      VALUES ($1, $2, $3, $4, $5, 'sent')
      RETURNING id, subject, recipient_count, sent_at`,
-    [subject, body, sentCount, senderEmail, adminUser?.id || null]
+    [subject, body, sentCount, senderEmail, validAdminId]
   );
 
   // System audit log
-  await createLog(
-    "info",
-    "system",
-    `Newsletter broadcast sent: "${subject}" to ${sentCount} subscribers`,
-    { adminId: adminUser?.id, recipientCount: sentCount }
-  );
+  try {
+    await createLog(
+      "info",
+      "system",
+      `Newsletter broadcast sent: "${subject}" to ${sentCount} subscribers`,
+      { adminId: validAdminId, recipientCount: sentCount }
+    );
+  } catch (logErr) {
+    console.warn("[NEWSLETTER] Audit log skipped:", logErr.message);
+  }
 
   return {
     success: true,
