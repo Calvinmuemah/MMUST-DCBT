@@ -27,16 +27,15 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${LOCAL_CONTAINER}$"; then
     exit 1
 fi
 
-echo ">>> Checking if local database already contains tables..."
-TABLE_COUNT=$(docker exec "$LOCAL_CONTAINER" psql -U postgres -d "$DB_NAME" -tAc "SELECT count(*) FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null || echo "0")
-TABLE_COUNT=${TABLE_COUNT:-0}
+echo ">>> Checking if local database already contains the 'users' table..."
+HAS_USERS=$(docker exec "$LOCAL_CONTAINER" psql -U postgres -d "$DB_NAME" -tAc "SELECT to_regclass('public.users');" 2>/dev/null | tr -d '[:space:]' || echo "")
 
-if [ "$TABLE_COUNT" -gt 0 ] && [ "$1" != "--force" ] && [ "$2" != "--force" ]; then
-    echo ">>> Local database already contains $TABLE_COUNT tables. Seed skipped (use --force to overwrite)."
+if [ "$HAS_USERS" = "users" ] && [ "$1" != "--force" ] && [ "$2" != "--force" ]; then
+    echo ">>> 'users' table already exists in local database. Seed skipped (use --force to overwrite)."
     exit 0
 fi
 
-echo ">>> Local database has $TABLE_COUNT tables. Streaming initial schema and data from Neon Cloud DB..."
-docker run --rm postgres:17-alpine pg_dump "$NEON_URL" --no-owner --no-acl | docker exec -i "$LOCAL_CONTAINER" psql -U postgres -d "$DB_NAME"
+echo ">>> Streaming schema and data from Neon Cloud DB into local database..."
+docker run --rm postgres:17-alpine pg_dump "$NEON_URL" --no-owner --no-acl --clean --if-exists | docker exec -i "$LOCAL_CONTAINER" psql -U postgres -d "$DB_NAME"
 
 echo ">>> [SUCCESS] Local database seeded from Neon Cloud DB!"
