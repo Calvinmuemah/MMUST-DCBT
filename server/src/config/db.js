@@ -32,6 +32,9 @@ if (useSSL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 15, // max clients per worker process
+  idleTimeoutMillis: 30000, // close idle clients after 30 seconds
+  connectionTimeoutMillis: 5000, // fail fast after 5s if DB unreachable
   ...(sslConfig ? { ssl: sslConfig } : {}),
 });
 
