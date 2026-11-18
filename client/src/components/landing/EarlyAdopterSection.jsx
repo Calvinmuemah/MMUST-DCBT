@@ -54,11 +54,10 @@ export default function EarlyAdopterSection() {
             <a 
               href="/app-release.apk" 
               download="MMUSTDCBT.apk"
-              className="inline-flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-colors shadow-sm"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-all shadow-sm hover:shadow-md"
             >
               <Download className="w-4 h-4 shrink-0" />
               <span>Download Android APK</span>
-              <span className="text-xs text-blue-200 border-l border-blue-400/40 pl-2">v1.0 • ~28MB</span>
             </a>
           </div>
 

@@ -78,10 +78,10 @@ export default function Footer() {
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Download Android APK (v1.0)</span>
+                <span>Download Android APK</span>
               </a>
               <p className="text-[10px] text-slate-500 mt-1 font-medium">
-                Free download • Android 7.0+ • Size: ~28MB
+                Free download • Android 7.0+
               </p>
             </div>
 

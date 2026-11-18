@@ -89,10 +89,10 @@ export default function AppShowcaseSection() {
         </p>
 
         {/* Action CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-1">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
           <a
             href="#download"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm sm:text-base shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2 group text-center"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm shadow-sm shadow-blue-600/20 transition-all flex items-center justify-center gap-2 group text-center"
           >
             <Download className="w-4 h-4" />
             <span>Download Android APK</span>
@@ -100,7 +100,7 @@ export default function AppShowcaseSection() {
 
           <a
             href="#how-it-works"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 active:bg-slate-900 border border-slate-700/80 text-slate-200 font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 text-center"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 active:bg-slate-900 border border-slate-700/80 text-slate-200 font-semibold text-sm transition-colors flex items-center justify-center gap-2 text-center"
           >
             <span>How It Works</span>
             <ArrowRight className="w-4 h-4 text-slate-400" />

@@ -74,7 +74,7 @@ export default function Navbar() {
               className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download Android APK (v1.0)</span>
+              <span>Download Android APK</span>
             </a>
           </div>
         </div>
