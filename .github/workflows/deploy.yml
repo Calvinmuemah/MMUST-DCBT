@@ -41,6 +41,7 @@ jobs:
           cd server
           node -c server.js
           node -c app.js
+          node -c ecosystem.config.cjs
           node -c src/config/db.js
           node -c src/controllers/admin.controller.js
           node -c src/controllers/chat.controller.js

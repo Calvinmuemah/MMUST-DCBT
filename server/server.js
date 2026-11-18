@@ -86,6 +86,9 @@ const startServer = async () => {
   if (!process.env.VERCEL) {
     app.listen(PORT, () => {
       console.log(`[INFO] MMUST DCBT Server running on port ${PORT} [${process.env.NODE_ENV || "development"}]`);
+      if (typeof process.send === "function") {
+        process.send("ready");
+      }
     });
   }
 };
