@@ -36,7 +36,7 @@ if [ "$TABLE_COUNT" -gt 0 ] && [ "$1" != "--force" ] && [ "$2" != "--force" ]; t
     exit 0
 fi
 
-echo ">>> Local database is empty. Streaming initial schema and data from Neon Cloud DB..."
-docker run --rm postgres:16-alpine pg_dump "$NEON_URL" --no-owner --no-acl | docker exec -i "$LOCAL_CONTAINER" psql -U postgres -d "$DB_NAME" > /dev/null 2>&1 || true
+echo ">>> Local database has $TABLE_COUNT tables. Streaming initial schema and data from Neon Cloud DB..."
+docker run --rm postgres:17-alpine pg_dump "$NEON_URL" --no-owner --no-acl | docker exec -i "$LOCAL_CONTAINER" psql -U postgres -d "$DB_NAME"
 
 echo ">>> [SUCCESS] Local database seeded from Neon Cloud DB!"

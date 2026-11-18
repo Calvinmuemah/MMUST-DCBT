@@ -61,8 +61,8 @@ log "Pruned local backup files older than 7 days."
 if [ -n "$NEON_URL" ]; then
     log "Streaming backup to Neon Cloud Database (Disaster Recovery)..."
 
-    # Uses ephemeral postgres container so host doesn't need postgres-client installed
-    gunzip -c "$BACKUP_FILE" | docker run --rm -i postgres:16-alpine psql "$NEON_URL" > /dev/null 2>&1
+    # Uses ephemeral postgres 17 container so host doesn't need postgres-client installed
+    gunzip -c "$BACKUP_FILE" | docker run --rm -i postgres:17-alpine psql "$NEON_URL" > /dev/null 2>&1
 
     log "Successfully synced latest database to Neon Cloud DB!"
     log "Neon compute will now automatically spin down and sleep to save quota."
