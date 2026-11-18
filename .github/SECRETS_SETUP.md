@@ -36,19 +36,19 @@ In GitHub: **Settings > Secrets and variables > Actions > New repository secret*
 | `VPS_PORT` | SSH port (Optional, defaults to 22) | `22` |
 
 #### Application & Database Secrets
-> **Security Notice**: Generate strong, random secrets using `openssl rand -hex 32`. Never copy placeholder values into production.
+> **Note**: The automated CI/CD pipeline will automatically generate strong, cryptographically secure defaults for `POSTGRES_PASSWORD` and `JWT_SECRET` if they are not already set in GitHub Secrets or on the VPS `.env`. You only need to provide `DATABASE_URL` if connecting to an external cloud database (such as Neon), and `GEMINI_API_KEY` for AI features.
 
 | Secret Name | Description | Example / Generation Command |
 | :--- | :--- | :--- |
-| `POSTGRES_PASSWORD` | Mandatory strong password for local PostgreSQL | `<GENERATE_RANDOM_PASSWORD_32_CHARS>` |
-| `DATABASE_URL` | *(Optional)* Leave empty to use local VPS DB; or provide if using Cloud Postgres | `Leave empty for local DB` |
+| `POSTGRES_PASSWORD` | *(Auto-generated if omitted)* Strong password for local PostgreSQL | `<GENERATE_RANDOM_PASSWORD_32_CHARS>` |
+| `DATABASE_URL` | *(Optional)* Connection URL for cloud Neon DB; omit to use VPS local DB | `postgresql://<USER>:<PASS>@<HOST>/<DB>?sslmode=require` |
 | `NEON_DATABASE_URL` | *(Optional)* Neon connection URL for daily offsite backup & disaster replica | `postgresql://<USER>:<PASS>@<HOST>/<DB>?sslmode=require` |
-| `JWT_SECRET` | Secret key for signing tokens (minimum 32 characters) | Run: `openssl rand -hex 32` |
-| `GEMINI_API_KEY` | Google Gemini AI API Key | `<YOUR_GOOGLE_GEMINI_KEY>` |
-| `EMAIL_USER` | Gmail address for sending emails via Nodemailer | `<YOUR_SYSTEM_EMAIL@GMAIL.COM>` |
-| `EMAIL_PASS` | 16-character Gmail App Password | `<YOUR_GMAIL_APP_PASSWORD>` |
-| `ALLOWED_ORIGINS` | Comma-separated production domains allowed for CORS | `https://yourdomain.com,https://admin.yourdomain.com` |
-| `VITE_API_BASE_URL` | API endpoint used by Client and Admin | `/api/v1` (or `https://api.yourdomain.com/api/v1`) |
+| `JWT_SECRET` | *(Auto-generated if omitted)* Key for signing JWT auth tokens (32+ chars) | Run: `openssl rand -hex 32` |
+| `GEMINI_API_KEY` | *(Optional)* Google Gemini AI API Key for chatbot | `<YOUR_GOOGLE_GEMINI_KEY>` |
+| `EMAIL_USER` | *(Optional)* Gmail address for sending emails via Nodemailer | `<YOUR_SYSTEM_EMAIL@GMAIL.COM>` |
+| `EMAIL_PASS` | *(Optional)* 16-character Gmail App Password | `<YOUR_GMAIL_APP_PASSWORD>` |
+| `ALLOWED_ORIGINS` | *(Optional)* Comma-separated production domains (defaults to `*`) | `https://yourdomain.com,https://admin.yourdomain.com` |
+| `VITE_API_BASE_URL` | *(Optional)* API endpoint used by Client and Admin (defaults to `/api/v1`) | `/api/v1` |
 
 ---
 

@@ -44,6 +44,8 @@ jobs:
           node -c src/config/db.js
           node -c src/controllers/admin.controller.js
           node -c src/controllers/chat.controller.js
+          node -c src/controllers/newsletter.controller.js
+          node -c src/services/newsletter.service.js
 
       # Build Client (Student Portal)
       - name: Build Client (Vite)
@@ -109,77 +111,130 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.VPS_PORT || 22 }} -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          PORT="${{ secrets.VPS_PORT }}"; PORT="${PORT:-22}"
+          ssh-keyscan -p $PORT -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # Ensure rsync is installed on target VPS
+      - name: Ensure target VPS has rsync
+        run: |
+          PORT="${{ secrets.VPS_PORT }}"; PORT="${PORT:-22}"
+          ssh -p $PORT ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            "command -v rsync >/dev/null 2>&1 || (apt-get update -qq && apt-get install -y -qq rsync)"
 
       # Create Timestamped Release Directory on VPS
       - name: Prepare Release Structure on VPS
         run: |
           RELEASE_ID=$(date +%Y%m%d_%H%M%S)
           echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
+          PORT="${{ secrets.VPS_PORT }}"; PORT="${PORT:-22}"
 
-          ssh -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+          ssh -p $PORT ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
             "mkdir -p /var/www/mmust-dcbt/releases/$RELEASE_ID/client/dist \
                       /var/www/mmust-dcbt/releases/$RELEASE_ID/admin/dist \
-                      /var/www/mmust-dcbt/server"
+                      /var/www/mmust-dcbt/server \
+                      /var/www/mmust-dcbt/nginx \
+                      /var/www/mmust-dcbt/scripts"
 
       # Sync Frontends into New Release Folder
       - name: Rsync Frontends to Release Folder
         run: |
-          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+          PORT="${{ secrets.VPS_PORT }}"; PORT="${PORT:-22}"
+          rsync -avz -e "ssh -p $PORT" \
             client/dist/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/releases/${{ env.RELEASE_ID }}/client/dist/
 
-          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+          rsync -avz -e "ssh -p $PORT" \
             admin/dist/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/releases/${{ env.RELEASE_ID }}/admin/dist/
 
-      # Sync Server Source Code & Scripts
-      - name: Rsync Backend Source & Tools
+      # Sync Server Source Code, Nginx Configs & Scripts
+      - name: Rsync Backend Source, Nginx & Tools
         run: |
+          PORT="${{ secrets.VPS_PORT }}"; PORT="${PORT:-22}"
           rsync -avz --delete \
             --exclude 'node_modules' \
             --exclude '.env' \
             --exclude 'coverage' \
-            -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            -e "ssh -p $PORT" \
             server/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/server/
 
-          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+          rsync -avz -e "ssh -p $PORT" \
             docker-compose.yml ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/docker-compose.yml
 
-          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+          rsync -avz -e "ssh -p $PORT" \
+            nginx/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/nginx/
+
+          rsync -avz -e "ssh -p $PORT" \
             scripts/ ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/scripts/
 
-          rsync -avz -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+          rsync -avz -e "ssh -p $PORT" \
             scripts/rollback.sh ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }}:/var/www/mmust-dcbt/rollback.sh
 
       # Execute Blue-Green Zero-Downtime Rollout on VPS
       - name: Execute Blue-Green Container Swap & Atomic Symlink
         run: |
-          ssh -p ${{ secrets.VPS_PORT || 22 }} ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} bash -s << 'EOF'
+          PORT="${{ secrets.VPS_PORT }}"; PORT="${PORT:-22}"
+          ssh -p $PORT ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} bash -s << 'EOF'
             set -e
             APP_DIR="/var/www/mmust-dcbt"
             RELEASE_DIR="$APP_DIR/releases/${{ env.RELEASE_ID }}"
             UPSTREAM_FILE="$APP_DIR/upstream.conf"
 
+            SUDO=""
+            if [ "$(id -u)" -ne 0 ]; then
+              SUDO="sudo"
+            fi
+
             cd "$APP_DIR"
             chmod +x rollback.sh scripts/*.sh
 
-            # 1. Update/write secure production .env with restricted 600 permissions
+            # 1. Update/write secure production .env (preserves existing server values if secrets not passed)
             touch .env
             chmod 600 .env
-            cat << 'ENVFILE' > .env
-            NODE_ENV=production
-            PORT=5000
-            POSTGRES_DB=${{ secrets.POSTGRES_DB || 'mmust_dcbt' }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER || 'postgres' }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            DB_SSL=${{ secrets.DB_SSL || 'false' }}
-            NEON_DATABASE_URL=${{ secrets.NEON_DATABASE_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            EMAIL_USER=${{ secrets.EMAIL_USER }}
-            EMAIL_PASS=${{ secrets.EMAIL_PASS }}
-            ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
-            ENVFILE
+
+            set_env_val() {
+              local key="$1"
+              local val="$2"
+              local default_val="$3"
+              if [ -n "$val" ]; then
+                local escaped_val=$(printf '%s\n' "$val" | sed -e 's/[\/&]/\\&/g')
+                if grep -q "^${key}=" .env; then
+                  sed -i "s|^${key}=.*|${key}=${escaped_val}|" .env
+                else
+                  echo "${key}=${val}" >> .env
+                fi
+              elif ! grep -q "^${key}=" .env && [ -n "$default_val" ]; then
+                echo "${key}=${default_val}" >> .env
+              fi
+            }
+
+            set_env_val "NODE_ENV" "production"
+            set_env_val "PORT" "5000"
+            set_env_val "POSTGRES_DB" "${{ secrets.POSTGRES_DB }}" "mmust_dcbt"
+            set_env_val "POSTGRES_USER" "${{ secrets.POSTGRES_USER }}" "postgres"
+            set_env_val "DATABASE_URL" "${{ secrets.DATABASE_URL }}"
+            set_env_val "DB_SSL" "${{ secrets.DB_SSL }}" "false"
+            set_env_val "NEON_DATABASE_URL" "${{ secrets.NEON_DATABASE_URL }}"
+            set_env_val "GEMINI_API_KEY" "${{ secrets.GEMINI_API_KEY }}"
+            set_env_val "EMAIL_USER" "${{ secrets.EMAIL_USER }}"
+            set_env_val "EMAIL_PASS" "${{ secrets.EMAIL_PASS }}"
+            set_env_val "ALLOWED_ORIGINS" "${{ secrets.ALLOWED_ORIGINS }}" "*"
+
+            # Auto-generate secure secrets if not provided in GitHub Secrets or .env
+            if ! grep -q "^POSTGRES_PASSWORD=" .env || [ -z "$(grep '^POSTGRES_PASSWORD=' .env | cut -d= -f2-)" ]; then
+              if [ -n "${{ secrets.POSTGRES_PASSWORD }}" ]; then
+                set_env_val "POSTGRES_PASSWORD" "${{ secrets.POSTGRES_PASSWORD }}"
+              else
+                set_env_val "POSTGRES_PASSWORD" "$(openssl rand -hex 24)"
+              fi
+            fi
+
+            if ! grep -q "^JWT_SECRET=" .env || [ -z "$(grep '^JWT_SECRET=' .env | cut -d= -f2-)" ]; then
+              if [ -n "${{ secrets.JWT_SECRET }}" ]; then
+                set_env_val "JWT_SECRET" "${{ secrets.JWT_SECRET }}"
+              else
+                set_env_val "JWT_SECRET" "$(openssl rand -hex 32)"
+              fi
+            fi
+
             chmod 600 .env
 
             # 2. Run Preflight Security & Secrets Validation
@@ -191,7 +246,15 @@ jobs:
               echo "server 127.0.0.1:5001;" > "$UPSTREAM_FILE"
             fi
 
-            # 4. Determine Active Slot vs Target Standby Slot
+            # 4. Auto-configure Nginx site
+            if [ -f "$APP_DIR/nginx/mmust-dcbt-unified.conf" ]; then
+              echo ">>> Initializing / Updating Nginx virtual host..."
+              $SUDO cp "$APP_DIR/nginx/mmust-dcbt-unified.conf" /etc/nginx/sites-available/mmust-dcbt.conf
+              $SUDO ln -sf /etc/nginx/sites-available/mmust-dcbt.conf /etc/nginx/sites-enabled/mmust-dcbt.conf
+              $SUDO rm -f /etc/nginx/sites-enabled/default
+            fi
+
+            # 5. Determine Active Slot vs Target Standby Slot
             if grep -q "5001" "$UPSTREAM_FILE"; then
               TARGET_SLOT="green"
               TARGET_SERVICE="server_green"
@@ -208,14 +271,14 @@ jobs:
 
             echo ">>> Active Slot: $OLD_CONTAINER | Deploying Target: $TARGET_SERVICE (Port $TARGET_PORT)..."
 
-            # 4. Ensure DB container is up
+            # 6. Ensure DB container is up
             docker compose up -d db
 
-            # 5. Build and start Target container while Old container stays live
+            # 7. Build and start Target container while Old container stays live
             docker compose build "$TARGET_SERVICE"
             docker compose up -d "$TARGET_SERVICE"
 
-            # 6. Verify health of Target container before routing any traffic
+            # 8. Verify health of Target container before routing any traffic
             echo ">>> Waiting for $TARGET_CONTAINER to become healthy on port $TARGET_PORT..."
             MAX_ATTEMPTS=30
             ATTEMPT=0
@@ -239,29 +302,29 @@ jobs:
 
             echo ">>> Healthcheck passed on port $TARGET_PORT!"
 
-            # 7. Switch Upstream to New Port
+            # 9. Switch Upstream to New Port
             echo "server 127.0.0.1:${TARGET_PORT};" > "$UPSTREAM_FILE"
 
-            # 8. Switch Frontend Atomic Symlink
+            # 10. Switch Frontend Atomic Symlink
             ln -sfn "$RELEASE_DIR" "$APP_DIR/current"
 
-            # 9. Graceful Nginx reload (zero dropped packets)
+            # 11. Graceful Nginx reload
             if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx; then
-              sudo systemctl reload nginx
+              $SUDO nginx -t && ($SUDO systemctl reload nginx || $SUDO systemctl restart nginx)
               echo ">>> Nginx reloaded with new upstream and frontend assets."
             fi
 
-            # 10. Stop Old Container (DO NOT DELETE - KEPT FOR INSTANT ROLLBACK)
+            # 12. Stop Old Container (DO NOT DELETE - KEPT FOR INSTANT ROLLBACK)
             if docker ps --format '{{.Names}}' | grep -q "^${OLD_CONTAINER}$"; then
               echo ">>> Stopping old container $OLD_CONTAINER (preserved for rollback)..."
               docker stop "$OLD_CONTAINER" || true
             fi
 
-            # 11. Cleanup old releases (keep last 5 for chunk retention and frontend rollback)
+            # 13. Cleanup old releases (keep last 5)
             cd "$APP_DIR/releases"
             ls -1dt * | tail -n +6 | xargs -r rm -rf
 
-            # 12. Prune dangling build images
+            # 14. Prune dangling build images
             docker image prune -f
 
             echo "=========================================================="

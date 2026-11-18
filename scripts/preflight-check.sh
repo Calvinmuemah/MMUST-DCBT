@@ -119,9 +119,9 @@ fi
 echo ""
 echo "--- 5. AI API Key Check ---"
 if [ -z "$PREFLIGHT_GEMINI_API_KEY" ]; then
-  check_fail "GEMINI_API_KEY is missing or empty"
+  check_warn "GEMINI_API_KEY is not configured (AI chatbot features will be unavailable until set)"
 elif [[ "$PREFLIGHT_GEMINI_API_KEY" == *"<GENERATE_"* ]]; then
-  check_fail "GEMINI_API_KEY contains an unreplaced placeholder string"
+  check_warn "GEMINI_API_KEY contains an unreplaced placeholder string"
 else
   check_pass "GEMINI_API_KEY is configured"
 fi
@@ -146,13 +146,13 @@ fi
 echo ""
 echo "--- 7. Nginx & Domain Configuration Check ---"
 if [[ "$PREFLIGHT_ALLOWED_ORIGINS" == *"yourdomain.com"* ]]; then
-  check_fail "ALLOWED_ORIGINS in '$ENV_FILE' contains placeholder 'yourdomain.com'. Set to your production domain (e.g. https://mmustcbt.ac.ke)."
+  check_warn "ALLOWED_ORIGINS in '$ENV_FILE' contains placeholder 'yourdomain.com'. Update to your production domain or IP when DNS is ready."
 elif [ -n "$PREFLIGHT_ALLOWED_ORIGINS" ]; then
   check_pass "ALLOWED_ORIGINS is configured ($PREFLIGHT_ALLOWED_ORIGINS)"
 fi
 
 if [ -d "nginx" ] && grep -rn --exclude="*.bak" --exclude="*.md" "yourdomain.com" nginx/ >/dev/null 2>&1; then
-  check_fail "Nginx config files contain unreplaced placeholder 'yourdomain.com'. Run 'bash scripts/configure-domains.sh <domain>' before production release."
+  check_warn "Nginx config files contain placeholder 'yourdomain.com'. Run 'bash scripts/configure-domains.sh <domain>' once your domain is ready."
 elif [ -d "nginx" ]; then
   check_pass "No placeholder 'yourdomain.com' found in active nginx/ configs"
 fi

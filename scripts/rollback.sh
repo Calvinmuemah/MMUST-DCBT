@@ -86,8 +86,13 @@ if [ -d "$RELEASES_DIR" ]; then
 fi
 
 # 7. Graceful Nginx reload
+SUDO=""
+if [ "$(id -u)" -ne 0 ]; then
+    SUDO="sudo"
+fi
+
 if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx; then
-    sudo systemctl reload nginx
+    $SUDO systemctl reload nginx
     echo "Nginx reloaded successfully."
 fi
 

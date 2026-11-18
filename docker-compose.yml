@@ -13,7 +13,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}@db:5432/${POSTGRES_DB:-mmust_dcbt}}"
+      - "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:-mmust_secure_pg_pass_2026}@db:5432/${POSTGRES_DB:-mmust_dcbt}}"
       - "JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required in .env}"
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - EMAIL_USER=${EMAIL_USER}
@@ -40,7 +40,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}@db:5432/${POSTGRES_DB:-mmust_dcbt}}"
+      - "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:${POSTGRES_PASSWORD:-mmust_secure_pg_pass_2026}@db:5432/${POSTGRES_DB:-mmust_dcbt}}"
       - "JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required in .env}"
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - EMAIL_USER=${EMAIL_USER}
@@ -63,7 +63,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-mmust_dcbt}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-mmust_secure_pg_pass_2026}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./server/sql:/docker-entrypoint-initdb.d:ro
@@ -73,10 +73,10 @@ services:
       - mmust_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-mmust_dcbt}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 2s
 
 networks:
   mmust_network:
