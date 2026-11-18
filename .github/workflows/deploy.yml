@@ -312,9 +312,20 @@ jobs:
 
             # 10. Switch Frontend Atomic Symlink
             ln -sfn "$RELEASE_DIR" "$APP_DIR/current"
+            chmod -R 755 "$APP_DIR"
+            chmod 600 "$APP_DIR/.env"
 
-            # 11. Graceful Nginx reload
-            if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx; then
+            # 11. Ensure Firewall allows HTTP (80) & HTTPS (443)
+            if command -v ufw >/dev/null 2>&1 && $SUDO ufw status | grep -q "Status: active"; then
+              echo ">>> Ensuring ports 80 & 443 are open in UFW firewall..."
+              $SUDO ufw allow 80/tcp || true
+              $SUDO ufw allow 443/tcp || true
+              $SUDO ufw reload || true
+            fi
+
+            # 12. Graceful Nginx reload
+            if command -v systemctl >/dev/null 2>&1; then
+              $SUDO systemctl enable --now nginx
               $SUDO nginx -t && ($SUDO systemctl reload nginx || $SUDO systemctl restart nginx)
               echo ">>> Nginx reloaded with new upstream and frontend assets."
             fi
