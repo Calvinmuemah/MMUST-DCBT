@@ -90,6 +90,19 @@ app.get("/", (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// SERVER STATUS & GREETING ENDPOINTS
+// ---------------------------------------------------------------------------
+app.get(["/", "/api", "/api/v1"], (req, res) => {
+  res.status(200).json({
+    status: "online",
+    message: "dcbtcare server is running",
+    service: "MMUST DCBT API",
+    version: "1.0.0",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ---------------------------------------------------------------------------
 // HEALTH, LIVENESS & READINESS PROBES
 // ---------------------------------------------------------------------------
 

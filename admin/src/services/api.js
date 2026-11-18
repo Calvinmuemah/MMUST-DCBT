@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://mmust-dcbt-api.vercel.app/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
 });
 
 api.interceptors.request.use((config) => {
@@ -18,7 +18,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
-      window.location.href = '/login';
+      window.location.href = '/admin/';
     }
     return Promise.reject(error);
   }

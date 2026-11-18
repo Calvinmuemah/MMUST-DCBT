@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://mmust-dcbt-api.vercel.app/api/v1";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 const parseResponse = async (res) => {
   const contentType = res.headers.get("content-type");
