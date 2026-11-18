@@ -46,12 +46,13 @@ const getUserById = async (userId) => {
 };
 
 const getUserByEmail = async (email) => {
+  if (!email) return null;
   const result = await pool.query(
     `SELECT ${selectUserFields}
      FROM users
-     WHERE email = $1
+     WHERE LOWER(email) = LOWER($1)
      LIMIT 1`,
-    [email]
+    [email.trim()]
   );
 
   return result.rows[0] || null;

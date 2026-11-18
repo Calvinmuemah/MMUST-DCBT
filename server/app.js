@@ -43,12 +43,33 @@ const allowedOrigins = [
 // Security HTTP headers
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.includes("*")) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  try {
+    const originHost = new URL(origin).hostname;
+    for (const allowed of allowedOrigins) {
+      if (allowed === "*") return true;
+      try {
+        const allowedHost = new URL(allowed).hostname;
+        if (allowedHost === originHost) return true;
+      } catch (_) {
+        if (allowed === originHost) return true;
+      }
+    }
+  } catch (_) {}
+  return false;
+};
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      const err = new Error(`Not allowed by CORS: ${origin}`);
+      err.statusCode = 403;
+      callback(err);
     }
   },
   credentials: true,
