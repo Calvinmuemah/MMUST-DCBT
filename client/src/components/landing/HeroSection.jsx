@@ -1,5 +1,4 @@
 import { 
-  HeartHandshake, 
   ArrowRight, 
   ShieldCheck, 
   CheckCircle2, 
@@ -45,22 +44,21 @@ export default function HeroSection() {
           </div>
 
           {/* Action Call-to-Actions */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
             <a
-              href="/register"
-              className="px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm sm:text-base shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/25 transition-all flex items-center justify-center gap-2.5 text-center group cursor-pointer"
+              href="#download"
+              className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm shadow-sm shadow-blue-600/20 hover:shadow-md hover:shadow-blue-600/25 transition-all flex items-center justify-center gap-2 text-center group cursor-pointer"
             >
-              <HeartHandshake className="w-4 h-4 text-blue-200 group-hover:scale-110 transition-transform" />
               <span>Begin Confidential Support</span>
-              <ArrowRight className="w-4 h-4 text-white/80 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform" />
             </a>
 
             <a
               href="#app-showcase"
-              className="px-6 py-3.5 rounded-xl bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-sm sm:text-base transition-colors flex items-center justify-center gap-2 text-center"
+              className="px-5 py-2.5 rounded-lg bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-sm transition-colors flex items-center justify-center gap-2 text-center"
             >
               <span>Explore Mobile App</span>
-              <ArrowRight className="w-4 h-4 text-slate-400" />
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
             </a>
           </div>
 
