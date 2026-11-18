@@ -274,6 +274,11 @@ jobs:
             # 6. Ensure DB container is up
             docker compose up -d db
 
+            # Optional: If local DB has no tables and NEON_DATABASE_URL is set, seed it
+            if [ -f "scripts/seed_from_neon.sh" ]; then
+              bash scripts/seed_from_neon.sh || true
+            fi
+
             # 7. Build and start Target container while Old container stays live
             docker compose build "$TARGET_SERVICE"
             docker compose up -d "$TARGET_SERVICE"
@@ -326,6 +331,12 @@ jobs:
 
             # 14. Prune dangling build images
             docker image prune -f
+
+            # 15. Ensure daily 2:00 AM Neon Sync cron job is registered
+            if [ -f "$APP_DIR/scripts/sync_to_neon.sh" ] && ! crontab -l 2>/dev/null | grep -q "sync_to_neon.sh"; then
+              (crontab -l 2>/dev/null; echo "0 2 * * * bash $APP_DIR/scripts/sync_to_neon.sh >> /var/log/mmust_neon_sync.log 2>&1") | crontab -
+              echo ">>> Registered daily 2:00 AM Neon database sync cron job."
+            fi
 
             echo "=========================================================="
             echo " MMUST DCBT Zero-Downtime Deployment Finished Successfully!"
