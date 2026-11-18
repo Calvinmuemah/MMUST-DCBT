@@ -253,6 +253,10 @@ jobs:
               $SUDO cp "$APP_DIR/nginx/mmust-dcbt-unified.conf" /etc/nginx/sites-available/mmust-dcbt.conf
               $SUDO ln -sf /etc/nginx/sites-available/mmust-dcbt.conf /etc/nginx/sites-enabled/mmust-dcbt.conf
               $SUDO rm -f /etc/nginx/sites-enabled/default
+              if [ -f "/etc/letsencrypt/live/dcbtcare.com/fullchain.pem" ]; then
+                echo ">>> Re-applying SSL configuration from Certbot..."
+                $SUDO certbot --nginx -d dcbtcare.com -d www.dcbtcare.com --reinstall --redirect -n || true
+              fi
             fi
 
             # 5. Determine Active Slot vs Target Standby Slot
