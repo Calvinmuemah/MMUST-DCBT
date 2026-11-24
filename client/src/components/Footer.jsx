@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { postRequest } from "../utils/api";
 
-export default function Footer() {
+export default function Footer({ onOpenModal }) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -143,19 +143,31 @@ export default function Footer() {
             </h4>
             <ul className="space-y-1.5 text-xs font-medium">
               <li>
-                <a href="#about" className="hover:text-blue-400 transition-colors">
+                <button 
+                  type="button" 
+                  onClick={() => onOpenModal && onOpenModal("support")} 
+                  className="hover:text-blue-400 transition-colors text-left cursor-pointer"
+                >
                   Counseling Support
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#faq" className="hover:text-blue-400 transition-colors">
+                <button 
+                  type="button" 
+                  onClick={() => onOpenModal && onOpenModal("privacy")} 
+                  className="hover:text-blue-400 transition-colors text-left cursor-pointer"
+                >
                   Privacy & Ethics
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#faq" className="hover:text-blue-400 transition-colors">
+                <button 
+                  type="button" 
+                  onClick={() => onOpenModal && onOpenModal("terms")} 
+                  className="hover:text-blue-400 transition-colors text-left cursor-pointer"
+                >
                   Clinical Protocols
-                </a>
+                </button>
               </li>
               <li>
                 <a href="#impact" className="hover:text-blue-400 transition-colors">
@@ -232,9 +244,27 @@ export default function Footer() {
             © {new Date().getFullYear()} MMUST DCBT Initiative. Masinde Muliro University of Science and Technology. All Rights Reserved.
           </p>
           <div className="flex items-center gap-4 sm:gap-6 font-medium text-slate-400">
-            <a href="#faq" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
-            <a href="#faq" className="hover:text-blue-400 transition-colors">Terms & Ethical Guidelines</a>
-            <a href="#contact" className="hover:text-blue-400 transition-colors">Support</a>
+            <button 
+              type="button" 
+              onClick={() => onOpenModal && onOpenModal("privacy")} 
+              className="hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </button>
+            <button 
+              type="button" 
+              onClick={() => onOpenModal && onOpenModal("terms")} 
+              className="hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              Terms & Ethical Guidelines
+            </button>
+            <button 
+              type="button" 
+              onClick={() => onOpenModal && onOpenModal("support")} 
+              className="hover:text-blue-400 transition-colors cursor-pointer"
+            >
+              Support
+            </button>
           </div>
         </div>
       </div>

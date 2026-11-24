@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
 
-export default function FaqSection() {
+export default function FaqSection({ onOpenModal }) {
   const [openIdx, setOpenIdx] = useState(0);
 
   const faqs = [
@@ -80,12 +80,13 @@ export default function FaqSection() {
               <p className="text-xs text-slate-500">Reach out directly to the MMUST Counseling & Wellness Unit.</p>
             </div>
           </div>
-          <a
-            href="#contact"
-            className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
+          <button
+            type="button"
+            onClick={() => onOpenModal && onOpenModal("support")}
+            className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold transition-colors cursor-pointer"
           >
             Contact Counseling Unit
-          </a>
+          </button>
         </div>
 
       </div>

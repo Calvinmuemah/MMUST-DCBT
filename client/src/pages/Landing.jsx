@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import HeroSection from "../components/landing/HeroSection";
@@ -9,43 +10,57 @@ import ImpactStatsSection from "../components/landing/ImpactStatsSection";
 import EarlyAdopterSection from "../components/landing/EarlyAdopterSection";
 import PartnersSection from "../components/landing/PartnersSection";
 import FaqSection from "../components/landing/FaqSection";
+import PolicyModal from "../components/landing/PolicyModal";
 
 export default function LandingPage() {
+  const [activeModal, setActiveModal] = useState(null);
+
+  const handleOpenModal = (modalType) => {
+    setActiveModal(modalType);
+  };
+
+  const handleCloseModal = () => {
+    setActiveModal(null);
+  };
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden">
       
       {/* 1. TOP NAVIGATION BAR */}
-      <Navbar />
+      <Navbar onOpenModal={handleOpenModal} />
 
       {/* 2. PRIMARY HERO SECTION (African Student Depression Story & Cultural Empathy) */}
-      <HeroSection />
+      <HeroSection onOpenModal={handleOpenModal} />
 
       {/* 3. SECOND SECTION ON SCROLL: DIGITAL CBT APP SHOWCASE & APK DOWNLOAD */}
-      <AppShowcaseSection />
+      <AppShowcaseSection onOpenModal={handleOpenModal} />
 
       {/* 4. ABOUT & 4 CORE PILLARS SECTION */}
-      <AboutSection />
+      <AboutSection onOpenModal={handleOpenModal} />
 
       {/* 5. HOW IT WORKS SECTION */}
-      <HowItWorksSection />
+      <HowItWorksSection onOpenModal={handleOpenModal} />
 
       {/* 6. CBT MODULES & CLINICAL SHOWCASE */}
-      <ModulesSection />
+      <ModulesSection onOpenModal={handleOpenModal} />
 
       {/* 7. CAMPUS IMPACT & CLINICAL RESEARCH STATS */}
-      <ImpactStatsSection />
+      <ImpactStatsSection onOpenModal={handleOpenModal} />
 
       {/* 8. ANDROID APK DOWNLOAD & MOBILE APP SHOWCASE */}
-      <EarlyAdopterSection />
+      <EarlyAdopterSection onOpenModal={handleOpenModal} />
 
       {/* 9. UNIVERSITY PARTNERS & VOICES */}
-      <PartnersSection />
+      <PartnersSection onOpenModal={handleOpenModal} />
 
       {/* 10. FREQUENTLY ASKED QUESTIONS */}
-      <FaqSection />
+      <FaqSection onOpenModal={handleOpenModal} />
 
       {/* 11. COMPANY FOOTER */}
-      <Footer />
+      <Footer onOpenModal={handleOpenModal} />
+
+      {/* 12. INTERACTIVE PRIVACY, ETHICS & SUPPORT MODAL */}
+      <PolicyModal type={activeModal} onClose={handleCloseModal} />
 
     </div>
   );
