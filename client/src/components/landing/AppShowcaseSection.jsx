@@ -92,12 +92,13 @@ export default function AppShowcaseSection() {
         {/* Action CTAs */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
           <a
-            href="#download"
-            onClick={() => trackEvent("download_apk_click", { source: "app_showcase_section" })}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm shadow-sm shadow-blue-600/20 transition-all flex items-center justify-center gap-2 group text-center"
+            href="/app-release.apk"
+            download="MMUSTDCBT.apk"
+            onClick={() => trackEvent("download_apk", { source: "app_showcase_section", filename: "MMUSTDCBT.apk" })}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm shadow-sm shadow-blue-600/20 transition-all flex items-center justify-center gap-2 group text-center cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            <span>Download Android APK</span>
+            <span>Get Our App</span>
           </a>
 
           <a

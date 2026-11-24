@@ -78,7 +78,7 @@ export default function Footer({ onOpenModal }) {
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Download Android APK</span>
+                <span>Get Our App</span>
               </a>
               <p className="text-[10px] text-slate-500 mt-1 font-medium">
                 Free download • Android 7.0+
@@ -130,7 +130,7 @@ export default function Footer({ onOpenModal }) {
               </li>
               <li>
                 <a href="#download" className="hover:text-blue-400 transition-colors">
-                  Download APK
+                  Get Our App
                 </a>
               </li>
             </ul>

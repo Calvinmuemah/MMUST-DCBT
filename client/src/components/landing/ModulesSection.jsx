@@ -98,22 +98,20 @@ export default function ModulesSection() {
       <div className="w-full relative z-10">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="max-w-2xl space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-              Interactive Tools
-            </p>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Clinical Modules Crafted for <span className="text-blue-600">Student Well-being.</span>
-            </h2>
-          </div>
-          <p className="text-slate-600 text-sm sm:text-base max-w-sm leading-relaxed">
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+            Interactive Tools
+          </p>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            Clinical Modules Crafted for <span className="text-blue-600">Student Well-being.</span>
+          </h2>
+          <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed max-w-xl mx-auto">
             Evidence-based CBT methods structured into easy, daily exercises on your phone.
           </p>
         </div>
 
         {/* Tab Navigation Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-8 custom-scrollbar">
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-3 mb-8 custom-scrollbar">
           {modules.map((m, idx) => (
             <button
               key={m.id}

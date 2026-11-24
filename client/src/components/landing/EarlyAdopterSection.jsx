@@ -12,11 +12,10 @@ export default function EarlyAdopterSection() {
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-teal-500/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff04_1px,transparent_1px),linear-gradient(to_bottom,#ffffff04_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] pointer-events-none" />
 
-      <div className="w-full relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+      <div className="w-full relative z-10">
         
-        {/* LEFT COLUMN: HEADLINE, BULLETS & DOWNLOAD APK BUTTON */}
-        <div className="lg:col-span-6 space-y-6 sm:space-y-7 text-left">
-          
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-blue-400">
             Mobile Application
           </p>
@@ -25,9 +24,15 @@ export default function EarlyAdopterSection() {
             Get the MMUST DCBT Android App.
           </h2>
 
-          <p className="text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed max-w-xl font-normal">
+          <p className="text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed max-w-xl mx-auto font-normal">
             Access confidential self-care tools, daily CBT exercises, and guided thought restructuring anytime directly from your Android phone.
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+        
+        {/* LEFT COLUMN: BULLETS & GET OUR APP BUTTON */}
+        <div className="lg:col-span-6 space-y-6 sm:space-y-7 text-left">
 
           <div className="space-y-3 pt-1">
             <p className="text-xs font-bold uppercase tracking-wider text-blue-400">
@@ -56,10 +61,10 @@ export default function EarlyAdopterSection() {
               href="/app-release.apk" 
               download="MMUSTDCBT.apk"
               onClick={() => trackEvent("download_apk", { source: "early_adopter_section", filename: "MMUSTDCBT.apk" })}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-all shadow-sm hover:shadow-md"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-all shadow-sm hover:shadow-md cursor-pointer"
             >
               <Download className="w-4 h-4 shrink-0" />
-              <span>Download Android APK</span>
+              <span>Get Our App</span>
             </a>
           </div>
 
@@ -107,6 +112,7 @@ export default function EarlyAdopterSection() {
           </div>
         </div>
 
+      </div>
       </div>
     </section>
   );
