@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { initGA, trackPageView } from "./utils/analytics";
 
 import LandingPage from "./pages/Landing";
 import Login from "./pages/Login";
@@ -14,6 +15,17 @@ import Onboarding from "./pages/Assessment";
 import ProtectedLayout from "./components/ProtectedLayout";
 import { AuthProvider } from "./utils/AuthContext";
 
+// Automatically report page views on route changes to Google Analytics
+function RouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
+
+  return null;
+}
+
 // Forward requests outside student SPA to the real Nginx location
 function ExternalRedirect({ to }) {
   useEffect(() => {
@@ -23,9 +35,14 @@ function ExternalRedirect({ to }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    initGA();
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
+        <RouteTracker />
         <Routes>
 
           {/* PUBLIC ROUTES */}

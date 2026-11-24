@@ -2,6 +2,7 @@ import {
   Download,
   CheckCircle2
 } from "lucide-react";
+import { trackEvent } from "../../utils/analytics";
 
 export default function EarlyAdopterSection() {
   return (
@@ -54,6 +55,7 @@ export default function EarlyAdopterSection() {
             <a 
               href="/app-release.apk" 
               download="MMUSTDCBT.apk"
+              onClick={() => trackEvent("download_apk", { source: "early_adopter_section", filename: "MMUSTDCBT.apk" })}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm transition-all shadow-sm hover:shadow-md"
             >
               <Download className="w-4 h-4 shrink-0" />
