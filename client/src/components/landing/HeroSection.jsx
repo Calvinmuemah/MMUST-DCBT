@@ -11,16 +11,16 @@ export default function HeroSection() {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-32 overflow-hidden bg-white text-slate-900 border-b border-slate-200/60">
       
-      {/* 1. Full-Cover Background Image with Soft Clean Opacity on White */}
+      {/* 1. Full-Cover Background Image with Enhanced Opacity on White */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
         <img 
           src={depressionHeroImg} 
           alt="African university student reflecting the weight of campus depression" 
-          className="w-full h-full object-cover object-center scale-105 opacity-20 filter contrast-105"
+          className="w-full h-full object-cover object-center scale-105 opacity-35 filter contrast-105"
           loading="eager"
         />
-        {/* Soft White Wash Gradient for crystal-clear readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/80 to-white/95" />
+        {/* Balanced White Wash Gradient for vibrant image presence and crisp text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/70 to-white/90" />
       </div>
 
       {/* Soft Ambient Light Glow */}
