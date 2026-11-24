@@ -1,27 +1,96 @@
+import { useState, useEffect, useRef } from "react";
 import { 
   TrendingUp, 
   CheckCircle2 
 } from "lucide-react";
 
 export default function ImpactStatsSection() {
+  const [counts, setCounts] = useState({
+    students: 1,
+    privacy: 1,
+    modules: 1,
+  });
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
+    let animId = null;
+    let startTime = null;
+    const duration = 1500; // 1.5s smooth easing
+
+    const targets = {
+      students: 500,
+      privacy: 100,
+      modules: 6,
+    };
+
+    const startAnimation = () => {
+      if (animId) cancelAnimationFrame(animId);
+      startTime = null;
+
+      const animate = (timestamp) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        
+        // easeOutExpo curve for pleasant acceleration and gentle deceleration
+        const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+
+        setCounts({
+          students: Math.floor(1 + (targets.students - 1) * ease),
+          privacy: Math.floor(1 + (targets.privacy - 1) * ease),
+          modules: Math.floor(1 + (targets.modules - 1) * ease),
+        });
+
+        if (progress < 1) {
+          animId = requestAnimationFrame(animate);
+        } else {
+          setCounts(targets);
+        }
+      };
+
+      animId = requestAnimationFrame(animate);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          startAnimation();
+        } else {
+          if (animId) cancelAnimationFrame(animId);
+          setCounts({ students: 1, privacy: 1, modules: 1 });
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(node);
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+      observer.disconnect();
+    };
+  }, []);
+
   const stats = [
     {
-      value: "500+",
+      display: `${counts.students}+`,
       label: "Students Supported",
       desc: "MMUST students actively using guided CBT check-ins and reflection logs across various faculties.",
     },
     {
-      value: "24/7",
+      display: "24/7",
       label: "Always Accessible",
       desc: "Immediate grounding exercises, chat reframing, and self-care tools ready at any hour.",
     },
     {
-      value: "100%",
+      display: `${counts.privacy}%`,
       label: "Anonymous & Private",
       desc: "No student registration numbers, academic grades, or personal identifying records stored.",
     },
     {
-      value: "6+",
+      display: `${counts.modules}+`,
       label: "Targeted Modules",
       desc: "Structured exercises for study stress, thought distortions, financial anxiety, and daily planning.",
     }
@@ -46,16 +115,19 @@ export default function ImpactStatsSection() {
           </p>
         </div>
 
-        {/* 4 Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+        {/* 4 Stats Cards with Smooth Number Count Animations */}
+        <div 
+          ref={containerRef}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6"
+        >
           {stats.map((s, i) => (
             <div
               key={i}
               className="p-6 sm:p-7 rounded-2xl bg-slate-50/80 border border-slate-200 transition-colors shadow-sm flex flex-col justify-between"
             >
               <div>
-                <div className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-                  {s.value}
+                <div className="text-3xl sm:text-4xl font-extrabold text-slate-900 tabular-nums">
+                  {s.display}
                 </div>
 
                 <h3 className="text-base font-bold text-slate-800 mt-2 mb-2">
