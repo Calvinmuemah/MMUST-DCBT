@@ -72,6 +72,7 @@ export default function PartnersSection() {
                 </p>
               </div>
 
+              {/* Author name details temporarily commented out
               <div className="pt-5 mt-5 border-t border-slate-200/80 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
                   {item.name[0]}
@@ -82,6 +83,7 @@ export default function PartnersSection() {
                   <p className="text-[10px] text-slate-500">{item.faculty}</p>
                 </div>
               </div>
+              */}
             </div>
           ))}
         </div>
