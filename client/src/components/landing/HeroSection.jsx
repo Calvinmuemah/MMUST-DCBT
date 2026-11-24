@@ -9,7 +9,7 @@ import { trackEvent } from "../../utils/analytics";
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-32 overflow-hidden bg-white text-slate-900 border-b border-slate-200/60">
+    <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-14 sm:py-20 md:py-28 overflow-hidden bg-white text-slate-900 border-b border-slate-200/60">
       
       {/* 1. Full-Cover Background Image with Clear Visibility */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
@@ -37,15 +37,10 @@ export default function HeroSection() {
           </span>
         </h1>
 
-        {/* Culturally Grounded Narrative */}
-        <div className="space-y-3.5 text-slate-800 text-sm sm:text-base md:text-lg leading-relaxed font-normal max-w-3xl mx-auto">
-          <p>
-            University life in Kenya carries heavy, unspoken burdens—the relentless pressure to succeed, financial strain, family expectations, and the days where getting out of bed feels like an impossible mountain.
-          </p>
-          <p className="text-slate-900 font-medium">
-            Too often, we suffer in silence because of stigma or fear of being misunderstood. <strong className="text-slate-950 font-bold">MMUST DCBT is built by our community, for our reality</strong>: a safe, completely anonymous digital sanctuary where you can unburden your mind, learn evidence-based Cognitive Behavioral tools, and heal on your own terms.
-          </p>
-        </div>
+        {/* Culturally Grounded Narrative (Concise for Mobile) */}
+        <p className="text-slate-800 text-sm sm:text-base md:text-lg leading-relaxed font-normal max-w-2xl mx-auto">
+          Between academic pressure, financial strain, and silent anxiety, you don't have to struggle alone. <strong className="text-slate-950 font-bold">MMUST DCBT</strong> is a safe, 100% anonymous sanctuary to unburden your mind, learn practical CBT tools, and heal on your own terms.
+        </p>
 
         {/* Action Call-to-Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
