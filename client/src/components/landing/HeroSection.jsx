@@ -11,16 +11,16 @@ export default function HeroSection() {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20 sm:py-24 md:py-32 overflow-hidden bg-white text-slate-900 border-b border-slate-200/60">
       
-      {/* 1. Full-Cover Background Image with Enhanced Opacity on White */}
+      {/* 1. Full-Cover Background Image with Clear Visibility */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
         <img 
           src={depressionHeroImg} 
           alt="African university student reflecting the weight of campus depression" 
-          className="w-full h-full object-cover object-center scale-105 opacity-35 filter contrast-105"
+          className="w-full h-full object-cover object-center scale-105 opacity-60 filter contrast-105"
           loading="eager"
         />
-        {/* Balanced White Wash Gradient for vibrant image presence and crisp text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/70 to-white/90" />
+        {/* Soft, Transparent White Overlay allowing the image to clearly show through */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/50 to-white/75" />
       </div>
 
       {/* Soft Ambient Light Glow */}
@@ -38,12 +38,12 @@ export default function HeroSection() {
         </h1>
 
         {/* Culturally Grounded Narrative */}
-        <div className="space-y-3.5 text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed font-normal max-w-3xl mx-auto">
+        <div className="space-y-3.5 text-slate-800 text-sm sm:text-base md:text-lg leading-relaxed font-normal max-w-3xl mx-auto">
           <p>
             University life in Kenya carries heavy, unspoken burdens—the relentless pressure to succeed, financial strain, family expectations, and the days where getting out of bed feels like an impossible mountain.
           </p>
-          <p className="text-slate-700 font-medium">
-            Too often, we suffer in silence because of stigma or fear of being misunderstood. <strong className="text-slate-900 font-semibold">MMUST DCBT is built by our community, for our reality</strong>: a safe, completely anonymous digital sanctuary where you can unburden your mind, learn evidence-based Cognitive Behavioral tools, and heal on your own terms.
+          <p className="text-slate-900 font-medium">
+            Too often, we suffer in silence because of stigma or fear of being misunderstood. <strong className="text-slate-950 font-bold">MMUST DCBT is built by our community, for our reality</strong>: a safe, completely anonymous digital sanctuary where you can unburden your mind, learn evidence-based Cognitive Behavioral tools, and heal on your own terms.
           </p>
         </div>
 
