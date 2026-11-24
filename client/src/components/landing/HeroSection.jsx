@@ -5,6 +5,7 @@ import {
   Sparkles
 } from "lucide-react";
 import depressionHeroImg from "../../assets/african-student-depression.jpg";
+import { trackEvent } from "../../utils/analytics";
 
 export default function HeroSection() {
   return (
@@ -47,6 +48,7 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
             <a
               href="#download"
+              onClick={() => trackEvent("begin_support_click", { source: "hero_section" })}
               className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm shadow-sm shadow-blue-600/20 hover:shadow-md hover:shadow-blue-600/25 transition-all flex items-center justify-center gap-2 text-center group cursor-pointer"
             >
               <span>Begin Confidential Support</span>

@@ -4,6 +4,7 @@ import {
   ArrowRight, 
   CheckCircle2 
 } from "lucide-react";
+import { trackEvent } from "../../utils/analytics";
 
 export default function AppShowcaseSection() {
   const [studentCount, setStudentCount] = useState(1);
@@ -92,6 +93,7 @@ export default function AppShowcaseSection() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
           <a
             href="#download"
+            onClick={() => trackEvent("download_apk_click", { source: "app_showcase_section" })}
             className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold text-sm shadow-sm shadow-blue-600/20 transition-all flex items-center justify-center gap-2 group text-center"
           >
             <Download className="w-4 h-4" />
