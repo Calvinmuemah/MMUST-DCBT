@@ -16,10 +16,10 @@ export default function Navbar() {
     <nav className="w-full sticky top-0 z-50 backdrop-blur-xl bg-white/95 border-b border-slate-200/80 transition-all duration-300">
       <div className="w-full px-3 sm:px-6 h-12 sm:h-14 flex items-center justify-between">
         
-        {/* LOGO - Just MMUSTDCBT */}
+        {/* LOGO - DCBT Care */}
         <a href="#" className="flex items-center group">
           <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
-            MMUST<span className="text-blue-600">DCBT</span>
+            DCBT<span className="text-blue-600">Care</span>
           </span>
         </a>
 

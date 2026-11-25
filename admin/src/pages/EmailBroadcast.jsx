@@ -227,7 +227,7 @@ const EmailBroadcast = () => {
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <p className="text-sm font-bold text-slate-800">SMTP Active</p>
           </div>
-          <p className="text-[11px] text-slate-500 font-medium mt-1">MMUSTCare Delivery Pipeline</p>
+          <p className="text-[11px] text-slate-500 font-medium mt-1">DCBT Care Delivery Pipeline</p>
         </div>
       </div>
 
@@ -421,7 +421,7 @@ const EmailBroadcast = () => {
                 <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider mb-2">
                   MMUST Mental Health
                 </span>
-                <h3 className="text-lg font-black tracking-tight">MMUSTCare Updates</h3>
+                <h3 className="text-lg font-black tracking-tight">DCBT Care Updates</h3>
                 <p className="text-xs text-blue-200 mt-0.5">Masinde Muliro University of Science & Technology</p>
               </div>
 

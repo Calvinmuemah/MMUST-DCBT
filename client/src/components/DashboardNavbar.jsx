@@ -16,7 +16,7 @@ export default function DashboardNavbar() {
       {/* LEFT */}
       <div className="flex items-center gap-3">
         <div>
-          <h1 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">MMUST DCBT</h1>
+          <h1 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">DCBT Care</h1>
           <p className="text-[11px] text-slate-500">CBT Dashboard</p>
         </div>
       </div>

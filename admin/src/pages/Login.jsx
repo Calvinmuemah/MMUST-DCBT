@@ -60,7 +60,7 @@ const Login = () => {
             <div className="w-2 h-2 rounded-full bg-[#f59e0b]"></div>
           </div>
           <span className="text-white font-extrabold tracking-tight text-xl drop-shadow-md">
-            MMUSTCare
+            DCBT Care
           </span>
         </div>
 
@@ -82,7 +82,7 @@ const Login = () => {
           
           {/* Main Headline */}
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-8">
-            Welcome to MMUSTCare!
+            Welcome to DCBT Care!
           </h1>
 
           {/* Error Banner (if error exists) */}

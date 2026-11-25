@@ -57,7 +57,7 @@ export default function Footer({ onOpenModal }) {
           <div className="lg:col-span-4 space-y-3.5">
             <div>
               <span className="font-black text-lg tracking-tight text-white">
-                MMUST <span className="text-blue-500">DCBT</span>
+                DCBT<span className="text-blue-500">Care</span>
               </span>
               <p className="text-[10px] text-slate-400 font-medium">
                 Digital Cognitive Behavioural Therapy Platform
@@ -241,7 +241,7 @@ export default function Footer({ onOpenModal }) {
         {/* BOTTOM DIVIDER & COPYRIGHT */}
         <div className="pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 text-center sm:text-left">
           <p>
-            © {new Date().getFullYear()} MMUST DCBT Initiative. Masinde Muliro University of Science and Technology. All Rights Reserved.
+            © {new Date().getFullYear()} DCBT Care Initiative. Masinde Muliro University of Science and Technology. All Rights Reserved.
           </p>
           <div className="flex items-center gap-4 sm:gap-6 font-medium text-slate-400">
             <button 

@@ -109,10 +109,10 @@ function App() {
       <header className="bg-white border-b border-slate-200/80 h-16 flex items-center px-6 md:px-8 sticky top-0 z-30 justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 font-black text-sm">
-            M
+            D
           </div>
           <span className="text-lg font-black tracking-tight text-slate-900">
-            MMUST<span className="text-blue-600">Care</span>
+            DCBT<span className="text-blue-600">Care</span>
           </span>
         </div>
 

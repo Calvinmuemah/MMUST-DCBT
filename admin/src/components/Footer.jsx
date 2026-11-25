@@ -5,7 +5,7 @@ const Footer = () => {
     <footer className="bg-white border-t border-slate-200/80 py-5 px-6 md:px-8 mt-auto">
       <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-700">MMUSTCare</span>
+          <span className="font-bold text-slate-700">DCBT Care</span>
           <span>•</span>
           <span>Masinde Muliro University of Science & Technology</span>
         </div>
